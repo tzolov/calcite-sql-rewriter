@@ -33,17 +33,24 @@ public class Main {
 		CalciteConnection calciteConnection = calConnection.unwrap(CalciteConnection.class);
 
 		Statement statement = calciteConnection.createStatement();
-		ResultSet results = statement.executeQuery(
-				"SELECT d.deptno\n"
-						+ "FROM hr.emps AS e\n"
-						+ "JOIN hr.depts AS d\n"
-						+ "  ON e.deptno = d.deptno\n"
-						+ "GROUP BY d.deptno\n"
-						+ "HAVING count(*) > 1");
-		while (results.next()) {
-			System.out.println(results.getInt(1));
+		String sql = "SELECT d.deptno\n"
+				+ "FROM hr.emps AS e\n"
+				+ "JOIN hr.depts AS d\n"
+				+ "  ON e.deptno = d.deptno\n"
+				+ "GROUP BY d.deptno\n"
+				+ "HAVING count(*) > 1";
+
+		if (statement.execute(sql)) {
+			ResultSet results =statement.getResultSet();
+			while (results.next()) {
+				System.out.println(results.getInt(1));
+			}
+			results.close();
+		} else {
+			System.out.printf("Update count: " + statement.getUpdateCount());
 		}
-		results.close();
+
+
 		statement.close();
 		calConnection.close();
 	}
