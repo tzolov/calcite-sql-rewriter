@@ -20,12 +20,4 @@ public class MyJdbcProject extends JdbcRules.JdbcProject {
 	public JdbcRules.JdbcProject copy(RelTraitSet traitSet, RelNode input, List<RexNode> projects, RelDataType rowType) {
 		return new MyJdbcProject(getCluster(), traitSet, input, projects, rowType);
 	}
-
-//	@Override
-//	public RelOptCost computeSelfCost(RelOptPlanner planner, RelMetadataQuery mq) {
-////		throw new RuntimeException();
-////		System.out.println("ORIGINAL: " + original.computeSelfCost(planner, mq));
-////		System.out.println("ME: " + planner.getCostFactory().makeZeroCost());
-//		return planner.getCostFactory().makeCost(-1000.0, -1000.0, -1000.0);
-//	}
 }

@@ -2,21 +2,25 @@ package io.pivotal.beach.calcite.programs;
 
 import org.apache.calcite.plan.*;
 import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.sql.SqlExplainLevel;
 import org.apache.calcite.tools.Program;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.tools.RelBuilderFactory;
 import org.apache.calcite.util.Litmus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
 public class ForcedRulesProgram implements Program {
+	private static final Logger logger = LoggerFactory.getLogger(ForcedRulesProgram.class);
+
 	private final BasicForcedRule[] rules;
 
 	public ForcedRulesProgram(BasicForcedRule... rules) {
 		this.rules = rules;
 	}
 
+	@Override
 	public RelNode run(
 			RelOptPlanner planner,
 			RelNode rel,
@@ -24,9 +28,8 @@ public class ForcedRulesProgram implements Program {
 			List<RelOptMaterialization> materializations,
 			List<RelOptLattice> lattices
 	) {
-		System.out.println("Running forced rules on:\n" + RelOptUtil.toString(rel));
-		RelNode result = replace(rel, rules, RelBuilder.proto(planner.getContext()));
-		return result;
+		logger.debug("Running forced rules on:\n" + RelOptUtil.toString(rel));
+		return replace(rel, rules, RelBuilder.proto(planner.getContext()));
 	}
 
 	private RelNode replace(RelNode original, BasicForcedRule[] rules, RelBuilderFactory relBuilderFactory) {
@@ -34,9 +37,10 @@ public class ForcedRulesProgram implements Program {
 		for (BasicForcedRule rule : rules) {
 			RelNode updated = rule.apply(p, relBuilderFactory);
 			if (updated != null) {
-				System.out.println("Rule: " + rule.toString());
-				System.out.println("Replacing:\n" + RelOptUtil.toString(p));
-				System.out.println("With:\n" + RelOptUtil.toString(updated));
+				logger.trace("Rule: " + rule.toString() +
+						"\nReplacing:\n" + RelOptUtil.toString(p) +
+						"\nWith:\n" + RelOptUtil.toString(updated)
+				);
 				// Must maintain row types so that nothing explodes
 				RelOptUtil.equal(
 						"rowtype of original", p.getRowType(),

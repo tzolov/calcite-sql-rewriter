@@ -7,14 +7,22 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.tools.Program;
 import org.apache.calcite.tools.Programs;
 import org.apache.calcite.util.Holder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
 public class SequenceProgram implements Program {
+	private static final Logger logger = LoggerFactory.getLogger(SequenceProgram.class);
+
 	private final ImmutableList<Program> programs;
 
-	public SequenceProgram(ImmutableList<Program> programs) {
-		this.programs = programs;
+	public SequenceProgram(Program... programs) {
+		this.programs = ImmutableList.copyOf(programs);
+	}
+
+	public ImmutableList<Program> getPrograms() {
+		return programs;
 	}
 
 	// Use with Hook.PROGRAM.add
@@ -28,7 +36,7 @@ public class SequenceProgram implements Program {
 			if (chain == null) {
 				chain = Programs.standard();
 			}
-			holder.set(new SequenceProgram(ImmutableList.of(program, chain)));
+			holder.set(new SequenceProgram(program, chain));
 			return null;
 		};
 	}
@@ -42,7 +50,7 @@ public class SequenceProgram implements Program {
 	) {
 		for (Program program : programs) {
 			rel = program.run(planner, rel, requiredOutputTraits, materializations, lattices);
-			System.out.println("After running " + program + ":\n" + RelOptUtil.toString(rel));
+			logger.debug("After running " + program + ":\n" + RelOptUtil.toString(rel));
 		}
 		return rel;
 	}

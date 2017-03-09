@@ -12,3 +12,6 @@ settings.xml
 .classpath
 .settings
 .checkstyle
+
+# OSX
+.DS_Store

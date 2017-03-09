@@ -5,12 +5,16 @@ import io.pivotal.beach.calcite.configuration.JournalledTableConfiguration;
 import io.pivotal.beach.calcite.programs.BasicForcedRule;
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelOptSchema;
+import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.schema.Schema;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.tools.RelBuilderFactory;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by tzoloc on 11/25/16.
@@ -30,22 +34,22 @@ public class JournalledSelectRule implements BasicForcedRule {
 		JournalledTableConfiguration tableConfig = JdbcTableUtilities.configurationForTable(table);
 		if (tableConfig == null) {
 			// Not a journalled table; nothing to do
-			// (should never happen since we filter in matches)
 			return null;
 		}
-
-		JdbcTable journalTable = (JdbcTable) schema.getTable(tableConfig.getJournal());
 
 		RelOptCluster cluster = originalScan.getCluster();
 		RelBuilder relBuilder = relBuilderFactory.create(cluster, relOptSchema);
 
 		// FROM <table_journal>
-//		relBuilder.scan(journalTable.tableName().names);
-		relBuilder.push(new JdbcTableScan(
+
+		String journalName = tableConfig.getJournal();
+		List<String> fqJournalName = new ArrayList<>(originalScan.getTable().getQualifiedName());
+		fqJournalName.set(fqJournalName.size() - 1, journalName);
+
+		relBuilder.push(JdbcTableUtilities.makeTableScan(
 				cluster,
-				relOptSchema.getTableForMember(journalTable.tableName().names),
-				journalTable,
-				((JdbcSchema) schema).convention
+				relOptSchema.getTableForMember(fqJournalName),
+				(JdbcTable) schema.getTable(journalName)
 		));
 
 		RexInputRef versionField = relBuilder.field(tableConfig.getVersionField());
