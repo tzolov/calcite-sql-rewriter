@@ -6,6 +6,7 @@ import org.apache.calcite.sql.SqlExplainLevel;
 import org.apache.calcite.tools.Program;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.tools.RelBuilderFactory;
+import org.apache.calcite.util.Litmus;
 
 import java.util.List;
 
@@ -38,9 +39,18 @@ public class ForcedRulesProgram implements Program {
 			}
 		}
 
-		List<RelNode> oldInputs = p.getInputs();
-		for (int i = 0; i < oldInputs.size(); i++) {
-			p.replaceInput(i, replace(oldInputs.get(i), rules, relBuilderFactory));
+		if (p == original) { // optimisation: avoid changing nodes inside stuff we changed
+			List<RelNode> oldInputs = p.getInputs();
+			for (int i = 0; i < oldInputs.size(); i++) {
+				p.replaceInput(i, replace(oldInputs.get(i), rules, relBuilderFactory));
+			}
+		} else {
+			// Must maintain row types so that nothing explodes
+			RelOptUtil.equal(
+					"rowtype of original", original.getRowType(),
+					"rowtype of replaced", p.getRowType(),
+					Litmus.THROW
+			);
 		}
 		return p;
 	}

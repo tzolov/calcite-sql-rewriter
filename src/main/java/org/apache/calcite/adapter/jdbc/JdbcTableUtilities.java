@@ -1,5 +1,6 @@
 package org.apache.calcite.adapter.jdbc;
 
+import io.pivotal.beach.calcite.configuration.JournalledTableConfiguration;
 import org.apache.calcite.schema.Schema;
 import org.apache.calcite.sql.SqlIdentifier;
 
@@ -20,5 +21,12 @@ public class JdbcTableUtilities {
 		// tableName is: [catalog,] [schema,] table
 		SqlIdentifier identifier = table.tableName();
 		return identifier.names.get(identifier.names.size() - 1);
+	}
+
+	public static JournalledTableConfiguration configurationForTable(JdbcTable jdbcTable) {
+		return JournalledTableConfiguration.get(
+				JdbcTableUtilities.getSchema(jdbcTable),
+				JdbcTableUtilities.getName(jdbcTable)
+		);
 	}
 }

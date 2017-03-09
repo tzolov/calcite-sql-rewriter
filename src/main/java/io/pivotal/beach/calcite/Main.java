@@ -18,7 +18,7 @@ public class Main {
 				new JournalledSelectRule()
 		)));
 		Hook.QUERY_PLAN.add((String o) -> {
-			System.out.println(o);
+			System.out.println("SQL sent to database: " + o);
 			return null;
 		});
 
@@ -28,7 +28,6 @@ public class Main {
 		Properties info = new Properties();
 		info.setProperty("lex", "JAVA");
 		info.setProperty("model", modelPath);
-		info.setProperty("test1", "Hi!");
 		Connection calConnection = DriverManager.getConnection("jdbc:calcite:", info);
 		CalciteConnection calciteConnection = calConnection.unwrap(CalciteConnection.class);
 
@@ -41,7 +40,7 @@ public class Main {
 				+ "HAVING count(*) > 1";
 
 		if (statement.execute(sql)) {
-			ResultSet results =statement.getResultSet();
+			ResultSet results = statement.getResultSet();
 			while (results.next()) {
 				System.out.println(results.getInt(1));
 			}
@@ -49,7 +48,6 @@ public class Main {
 		} else {
 			System.out.printf("Update count: " + statement.getUpdateCount());
 		}
-
 
 		statement.close();
 		calConnection.close();
