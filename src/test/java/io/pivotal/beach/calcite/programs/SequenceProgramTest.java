@@ -112,4 +112,9 @@ public class SequenceProgramTest {
 		// Not much we can check about the program; it is built inline and has no particular features
 		Assert.assertNotNull(subPrograms.get(1));
 	}
+
+	@Test(expected = RuntimeException.class)
+	public void testPrepend_throwsIfNoHolderIsGiven() {
+		SequenceProgram.prepend(subProgram).apply(null);
+	}
 }

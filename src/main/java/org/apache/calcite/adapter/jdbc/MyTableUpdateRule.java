@@ -16,7 +16,9 @@ import org.apache.calcite.plan.RelTraitSet;
 import org.apache.calcite.plan.volcano.RelSubset;
 import org.apache.calcite.prepare.Prepare.CatalogReader;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.core.Project;
 import org.apache.calcite.rel.core.TableModify.Operation;
+import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.metadata.RelMetadataQuery;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rex.RexBuilder;
@@ -115,28 +117,25 @@ public class MyTableUpdateRule extends RelOptRule {
 				.addAll(input.getRowType().getFieldList())
 				.add("last_version_number", maxOverRexNode.getType()).build();
 
-		JdbcProject newJdbcProject = new MyJdbcProject(cluster, traitSet, input, newProjections, newProjectDataType);
-
-		relBuilder.push(newJdbcProject);
+		relBuilder.push(new LogicalProject(cluster, traitSet, input, newProjections, newProjectDataType));
 
 		// 3. FILTER (exp_date = last_version_number)
 		RexNode condition = relBuilder.call(SqlStdOperatorTable.EQUALS,
 				relBuilder.field("version_number"),
 				relBuilder.field("last_version_number"));
 
-		JdbcFilter jdbcFilter = new JdbcFilter(cluster, traitSet, newJdbcProject, condition);
+		JdbcFilter jdbcFilter = new JdbcFilter(cluster, traitSet, relBuilder.peek(), condition);
 		relBuilder.push(jdbcFilter);
 
 		// 4. TOP PROJECT (same as the Scan Row Type - filters out the last_version_number column)
-		JdbcProject topJdbcProject = new MyJdbcProject(cluster, traitSet, jdbcFilter, fields, input.getRowType());
-		relBuilder.push(topJdbcProject);
+		relBuilder.push(new LogicalProject(cluster, traitSet, jdbcFilter, fields, input.getRowType()));
 
 		// 5. Insert
 		JdbcTableModify insert = new JdbcTableModify(update.getCluster(),
 				update.getTraitSet(),
 				update.getTable(),
 				update.getCatalogReader(),
-				topJdbcProject,
+				relBuilder.peek(),
 				Operation.INSERT,
 				null,
 				null,

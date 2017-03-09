@@ -5,7 +5,6 @@ import io.pivotal.beach.calcite.configuration.JournalledTableConfiguration;
 import io.pivotal.beach.calcite.programs.BasicForcedRule;
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelOptSchema;
-import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.schema.Schema;
