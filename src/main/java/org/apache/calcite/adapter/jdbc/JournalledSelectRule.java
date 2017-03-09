@@ -16,6 +16,10 @@ import org.apache.calcite.sql.SqlExplainLevel;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.tools.RelBuilderFactory;
+import org.apache.calcite.util.Util;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by tzoloc on 11/25/16.
@@ -42,13 +46,11 @@ public class JournalledSelectRule implements BasicForcedRule {
 		JdbcTable journalTable = (JdbcTable) schema.getTable(tableConfig.getJournal());
 
 		RelOptCluster cluster = originalScan.getCluster();
-		RelTraitSet traitSet = originalScan.getTraitSet();
 		RelBuilder relBuilder = relBuilderFactory.create(cluster, relOptSchema);
 
 		// FROM <table_journal>
 		relBuilder.scan(journalTable.tableName().names);
 
-		ImmutableList<RexNode> allJournalFields = relBuilder.fields();
 		RexInputRef versionField = relBuilder.field(tableConfig.getVersionField());
 		RexInputRef subsequentVersionField = relBuilder.field(tableConfig.getSubsequentVersionField());
 
@@ -62,18 +64,13 @@ public class JournalledSelectRule implements BasicForcedRule {
 
 		// WHERE <version_field> = <maxVersionField> AND <subsequent_version_field> IS NULL
 		relBuilder.filter(
-				relBuilder.equals(versionField, maxVersionField),
+//				relBuilder.equals(versionField, maxVersionField),
 				relBuilder.isNull(subsequentVersionField)
 		);
 
 		// SELECT <originally_requested_columns>
-//		relBuilder.project(originalScan.getRowType()); // ??
-		relBuilder.push(new LogicalProject(cluster, traitSet, relBuilder.peek(), allJournalFields, originalScan.getRowType()));
+		BuilderUtils.projectToMatch(relBuilder, originalScan.getRowType());
 
-		RelNode relNode = relBuilder.build();
-
-		System.out.println("Expanded RelNode: \n" + RelOptUtil.toString(relNode, SqlExplainLevel.ALL_ATTRIBUTES));
-
-		return relNode;
+		return relBuilder.build();
 	}
 }

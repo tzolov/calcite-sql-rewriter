@@ -35,6 +35,15 @@ public class ForcedRulesProgram implements Program {
 		for (BasicForcedRule rule : rules) {
 			RelNode updated = rule.apply(p, relBuilderFactory);
 			if (updated != null) {
+				System.out.println("Rule: " + rule.toString());
+				System.out.println("Replacing:\n" + RelOptUtil.toString(p, SqlExplainLevel.ALL_ATTRIBUTES));
+				System.out.println("With:\n" + RelOptUtil.toString(updated, SqlExplainLevel.ALL_ATTRIBUTES));
+				// Must maintain row types so that nothing explodes
+				RelOptUtil.equal(
+						"rowtype of original", p.getRowType(),
+						"rowtype of replaced", updated.getRowType(),
+						Litmus.THROW
+				);
 				p = updated;
 			}
 		}
@@ -42,15 +51,12 @@ public class ForcedRulesProgram implements Program {
 		if (p == original) { // optimisation: avoid changing nodes inside stuff we changed
 			List<RelNode> oldInputs = p.getInputs();
 			for (int i = 0; i < oldInputs.size(); i++) {
-				p.replaceInput(i, replace(oldInputs.get(i), rules, relBuilderFactory));
+				RelNode originalInput = oldInputs.get(i);
+				RelNode replacedInput = replace(originalInput, rules, relBuilderFactory);
+				if (replacedInput != originalInput) {
+					p.replaceInput(i, replacedInput);
+				}
 			}
-		} else {
-			// Must maintain row types so that nothing explodes
-			RelOptUtil.equal(
-					"rowtype of original", original.getRowType(),
-					"rowtype of replaced", p.getRowType(),
-					Litmus.THROW
-			);
 		}
 		return p;
 	}

@@ -22,7 +22,7 @@ public class Main {
 			return null;
 		});
 
-		String modelPath = argv.length > 0? argv[0]:"src/main/resources/myTestModel2.json";
+		String modelPath = (argv.length > 0) ? argv[0] : "src/main/resources/myTestModel2.json";
 
 		Class.forName(org.apache.calcite.jdbc.Driver.class.getName());
 		Properties info = new Properties();
