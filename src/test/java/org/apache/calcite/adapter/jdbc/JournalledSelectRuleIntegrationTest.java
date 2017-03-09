@@ -12,6 +12,7 @@ import org.junit.Test;
 
 public class JournalledSelectRuleIntegrationTest {
 
+	@SuppressWarnings("Guava") // Must conform to Calcite's API
 	private Function<Holder<Program>, Void> program = SequenceProgram.prepend(
 			new ForcedRulesProgram(new JournalledSelectRule())
 	);

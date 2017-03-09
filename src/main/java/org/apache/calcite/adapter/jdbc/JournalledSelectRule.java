@@ -28,9 +28,9 @@ public class JournalledSelectRule implements BasicForcedRule {
 
 		JdbcTable table = ((JdbcTableScan) originalScan).jdbcTable;
 		RelOptSchema relOptSchema = originalScan.getTable().getRelOptSchema();
-		Schema schema = JdbcTableUtilities.getSchema(table);
+		Schema schema = JdbcTableUtils.getSchema(table);
 
-		JournalledTableConfiguration tableConfig = JdbcTableUtilities.configurationForTable(table);
+		JournalledTableConfiguration tableConfig = JdbcTableUtils.configurationForTable(table);
 		if (tableConfig == null) {
 			// Not a journalled table; nothing to do
 			return null;
@@ -45,7 +45,7 @@ public class JournalledSelectRule implements BasicForcedRule {
 		List<String> fqJournalName = new ArrayList<>(originalScan.getTable().getQualifiedName());
 		fqJournalName.set(fqJournalName.size() - 1, journalName);
 
-		relBuilder.push(JdbcTableUtilities.makeTableScan(
+		relBuilder.push(JdbcTableUtils.makeTableScan(
 				cluster,
 				relOptSchema.getTableForMember(fqJournalName),
 				(JdbcTable) schema.getTable(journalName)

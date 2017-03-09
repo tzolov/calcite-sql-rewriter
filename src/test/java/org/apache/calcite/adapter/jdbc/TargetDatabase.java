@@ -34,7 +34,7 @@ class TargetDatabase {
 			+ "         \"journalDefaultKey\": [\"id\"],\n"
 			+ "         \"journalTables\": {\n"
 			+ "           \"emps\": [\"empid\"],\n"
-			+ "           \"depts\": [\"deptno\"]\n"
+			+ "           \"depts\": \"deptno\"\n"
 			+ "         }\n"
 			+ "       }\n"
 			+ "     }\n"

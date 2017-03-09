@@ -14,8 +14,8 @@ import org.apache.calcite.tools.RelBuilder;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BuilderUtils {
-	public static RexNode makeOver(
+class BuilderUtils {
+	static RexNode makeOver(
 			RelBuilder relBuilder,
 			SqlAggFunction operator,
 			List<RexNode> exprs,
@@ -35,7 +35,7 @@ public class BuilderUtils {
 		);
 	}
 
-	public static RexNode makeOver(
+	static RexNode makeOver(
 			RelBuilder relBuilder,
 			SqlAggFunction operator,
 			List<RexNode> exprs,
@@ -65,7 +65,7 @@ public class BuilderUtils {
 		);
 	}
 
-	public static void projectToMatch(RelBuilder relBuilder, RelDataType row) {
+	static void projectToMatch(RelBuilder relBuilder, RelDataType row) {
 		List<String> originalFieldNames = row.getFieldNames();
 		List<RexNode> mappedFields = new ArrayList<>();
 		for(String fieldName : originalFieldNames) {
@@ -75,11 +75,15 @@ public class BuilderUtils {
 		relBuilder.convert(row, true); // Patch nullability of columns, etc.
 	}
 
-	public static RexInputRef appendField(RelBuilder relBuilder, RexNode field) {
+	static RexInputRef appendField(RelBuilder relBuilder, RexNode field) {
 		List<RexNode> fields = new ArrayList<>();
 		fields.addAll(relBuilder.fields());
 		fields.add(field);
 		relBuilder.project(fields);
 		return relBuilder.field(fields.size() - 1);
+	}
+
+	private BuilderUtils() {
+		throw new UnsupportedOperationException();
 	}
 }
