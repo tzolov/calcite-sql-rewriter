@@ -5,21 +5,12 @@ import io.pivotal.beach.calcite.configuration.JournalledTableConfiguration;
 import io.pivotal.beach.calcite.programs.BasicForcedRule;
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelOptSchema;
-import org.apache.calcite.plan.RelOptUtil;
-import org.apache.calcite.plan.RelTraitSet;
 import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rex.RexInputRef;
-import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.schema.Schema;
-import org.apache.calcite.sql.SqlExplainLevel;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.tools.RelBuilderFactory;
-import org.apache.calcite.util.Util;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by tzoloc on 11/25/16.
@@ -49,22 +40,28 @@ public class JournalledSelectRule implements BasicForcedRule {
 		RelBuilder relBuilder = relBuilderFactory.create(cluster, relOptSchema);
 
 		// FROM <table_journal>
-		relBuilder.scan(journalTable.tableName().names);
+//		relBuilder.scan(journalTable.tableName().names);
+		relBuilder.push(new JdbcTableScan(
+				cluster,
+				relOptSchema.getTableForMember(journalTable.tableName().names),
+				journalTable,
+				((JdbcSchema) schema).convention
+		));
 
 		RexInputRef versionField = relBuilder.field(tableConfig.getVersionField());
 		RexInputRef subsequentVersionField = relBuilder.field(tableConfig.getSubsequentVersionField());
 
 		// <maxVersionField> = MAX(<version_number>) OVER (PARTITION BY <primary_key>)
-		RexNode maxVersionField = BuilderUtils.makeOver(
+		RexInputRef maxVersionField = BuilderUtils.appendField(relBuilder, BuilderUtils.makeOver(
 				relBuilder,
 				SqlStdOperatorTable.MAX,
 				ImmutableList.of(versionField),
 				relBuilder.fields(tableConfig.getKeys())
-		);
+		));
 
 		// WHERE <version_field> = <maxVersionField> AND <subsequent_version_field> IS NULL
 		relBuilder.filter(
-//				relBuilder.equals(versionField, maxVersionField),
+				relBuilder.equals(versionField, maxVersionField),
 				relBuilder.isNull(subsequentVersionField)
 		);
 

@@ -24,9 +24,8 @@ public class ForcedRulesProgram implements Program {
 			List<RelOptMaterialization> materializations,
 			List<RelOptLattice> lattices
 	) {
-		System.out.println("BEGIN: \n" + RelOptUtil.toString(rel, SqlExplainLevel.ALL_ATTRIBUTES));
+		System.out.println("Running forced rules on:\n" + RelOptUtil.toString(rel));
 		RelNode result = replace(rel, rules, RelBuilder.proto(planner.getContext()));
-		System.out.println("END: \n" + RelOptUtil.toString(result, SqlExplainLevel.ALL_ATTRIBUTES));
 		return result;
 	}
 
@@ -36,8 +35,8 @@ public class ForcedRulesProgram implements Program {
 			RelNode updated = rule.apply(p, relBuilderFactory);
 			if (updated != null) {
 				System.out.println("Rule: " + rule.toString());
-				System.out.println("Replacing:\n" + RelOptUtil.toString(p, SqlExplainLevel.ALL_ATTRIBUTES));
-				System.out.println("With:\n" + RelOptUtil.toString(updated, SqlExplainLevel.ALL_ATTRIBUTES));
+				System.out.println("Replacing:\n" + RelOptUtil.toString(p));
+				System.out.println("With:\n" + RelOptUtil.toString(updated));
 				// Must maintain row types so that nothing explodes
 				RelOptUtil.equal(
 						"rowtype of original", p.getRowType(),

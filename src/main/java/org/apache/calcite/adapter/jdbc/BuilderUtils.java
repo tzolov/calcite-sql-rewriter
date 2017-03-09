@@ -1,9 +1,9 @@
 package org.apache.calcite.adapter.jdbc;
 
 import com.google.common.collect.ImmutableList;
-import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rex.RexFieldCollation;
+import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexWindowBound;
 import org.apache.calcite.sql.SqlAggFunction;
@@ -73,5 +73,13 @@ public class BuilderUtils {
 		}
 		relBuilder.project(mappedFields);
 		relBuilder.convert(row, true); // Patch nullability of columns, etc.
+	}
+
+	public static RexInputRef appendField(RelBuilder relBuilder, RexNode field) {
+		List<RexNode> fields = new ArrayList<>();
+		fields.addAll(relBuilder.fields());
+		fields.add(field);
+		relBuilder.project(fields);
+		return relBuilder.field(fields.size() - 1);
 	}
 }

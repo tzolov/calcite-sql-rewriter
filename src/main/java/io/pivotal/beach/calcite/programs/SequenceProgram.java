@@ -2,10 +2,7 @@ package io.pivotal.beach.calcite.programs;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
-import org.apache.calcite.plan.RelOptLattice;
-import org.apache.calcite.plan.RelOptMaterialization;
-import org.apache.calcite.plan.RelOptPlanner;
-import org.apache.calcite.plan.RelTraitSet;
+import org.apache.calcite.plan.*;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.tools.Program;
 import org.apache.calcite.tools.Programs;
@@ -45,6 +42,7 @@ public class SequenceProgram implements Program {
 	) {
 		for (Program program : programs) {
 			rel = program.run(planner, rel, requiredOutputTraits, materializations, lattices);
+			System.out.println("After running " + program + ":\n" + RelOptUtil.toString(rel));
 		}
 		return rel;
 	}
