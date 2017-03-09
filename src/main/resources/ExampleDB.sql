@@ -5,7 +5,7 @@ CREATE TABLE hr.depts_journal (
   deptno SERIAL NOT NULL,
   version_number TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
   subsequent_version_number TIMESTAMP WITH TIME ZONE NULL DEFAULT NULL,
-  department_name VARCHAR NOT NULL,
+  department_name TEXT NOT NULL,
   PRIMARY KEY (deptno, version_number)
 );
 
@@ -14,12 +14,11 @@ CREATE TABLE hr.emps_journal (
   deptno INT NOT NULL,
   version_number TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
   subsequent_version_number TIMESTAMP WITH TIME ZONE NULL DEFAULT NULL,
-  first_name VARCHAR NOT NULL,
-  last_name VARCHAR NOT NULL,
+  first_name TEXT NULL DEFAULT NULL, -- Nullable test column
+  last_name TEXT NOT NULL, -- Non-nullable test column
   PRIMARY KEY (empid, version_number)
 );
 
-DROP VIEW IF EXISTS hr.depts;
 CREATE VIEW hr.depts AS
   WITH link_last AS (
       SELECT *, MAX(version_number) OVER (PARTITION BY deptno) AS last_version_number
