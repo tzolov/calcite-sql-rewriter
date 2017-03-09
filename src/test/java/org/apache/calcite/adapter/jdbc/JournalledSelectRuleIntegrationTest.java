@@ -41,7 +41,6 @@ public class JournalledSelectRuleIntegrationTest {
 						"empid=2\n" +
 						"empid=3\n" +
 						"empid=4\n" +
-						"empid=5\n" +
 						"empid=6\n");
 	}
 
@@ -57,6 +56,21 @@ public class JournalledSelectRuleIntegrationTest {
 				.withHook(Hook.PROGRAM, program)
 				.runs()
 				.returns("deptno=2\n");
+	}
+
+	@Test
+	public void testSelectNonJournalled() {
+		CalciteAssert
+				.model(TargetDatabase.JOURNALLED_MODEL)
+				.query("SELECT * FROM \"hr\".\"non_journalled\"")
+				.withHook(Hook.PROGRAM, program)
+				.explainContains("JdbcToEnumerableConverter\n" +
+						"  JdbcTableScan(table=[[hr, non_journalled]])\n")
+				.runs()
+				.planHasSql("SELECT *\n" +
+						"FROM \"calcite_sql_rewriter_integration_test\".\"non_journalled\"")
+				.returns("id=1\n" +
+						"id=2\n");
 	}
 
 }
