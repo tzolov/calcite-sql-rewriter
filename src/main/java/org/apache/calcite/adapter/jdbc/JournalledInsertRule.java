@@ -5,6 +5,7 @@ import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilder;
 import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilderFactory;
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelOptSchema;
+import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.TableModify.Operation;
 import org.apache.calcite.rel.logical.LogicalProject;
@@ -34,18 +35,18 @@ public class JournalledInsertRule implements BasicForcedRule {
 		}
 
 		LogicalProject logicalProject = (LogicalProject) tableModify.getInput();
-		LogicalValues logicalValues = (LogicalValues) logicalProject.getInput();
 
-		RelOptSchema relOptSchema = originalRel.getTable().getRelOptSchema();
+		JdbcRelBuilder relBuilder = relBuilderFactory.create(
+				originalRel.getCluster(),
+				originalRel.getTable().getRelOptSchema()
+		);
 
-		RelOptCluster cluster = originalRel.getCluster();
+		relBuilder.push(logicalProject.getInput());
 
-		JdbcRelBuilder relBuilder = relBuilderFactory.create(cluster, relOptSchema);
-
-		relBuilder.values(logicalValues.getTuples(), logicalValues.getRowType());
+		RelOptTable journalTable = tableModify.getTable();
 
 		LogicalTableModify newTableModify = LogicalTableModify.create(
-				tableModify.getTable(),
+				journalTable,
 				tableModify.getCatalogReader(),
 				relBuilder.peek(),
 				Operation.INSERT,
@@ -55,6 +56,9 @@ public class JournalledInsertRule implements BasicForcedRule {
 		);
 
 		relBuilder.push(newTableModify);
+
+		// SELECT <originally_requested_columns>
+		relBuilder.projectToMatch(originalRel.getRowType());
 
 		return relBuilder.build();
 	}

@@ -2,7 +2,7 @@ package io.pivotal.beach.calcite;
 
 import io.pivotal.beach.calcite.programs.ForcedRulesProgram;
 import io.pivotal.beach.calcite.programs.SequenceProgram;
-import org.apache.calcite.adapter.jdbc.JournalledInsertRule;
+import org.apache.calcite.adapter.jdbc.JournalledSelectRule;
 import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilder;
 import org.apache.calcite.jdbc.CalciteConnection;
 import org.apache.calcite.runtime.Hook;
@@ -16,8 +16,8 @@ import java.util.Properties;
 public class Main {
 	public static void main(String[] argv) throws Exception {
 		Hook.PROGRAM.add(SequenceProgram.prepend(new ForcedRulesProgram(new JdbcRelBuilder.FactoryFactory(),
-				//new JournalledSelectRule()
-				new JournalledInsertRule()
+				new JournalledSelectRule()
+				//new JournalledInsertRule()
 		)));
 		Hook.QUERY_PLAN.add((String o) -> {
 			System.out.println("SQL sent to database: " + o);
@@ -40,7 +40,7 @@ public class Main {
 //				+ "  ON e.deptno = d.deptno\n"
 //				+ "GROUP BY d.deptno\n"
 //				+ "HAVING count(*) > 1";
-		String sql = "INSERT INTO hr.depts_journal (deptno, department_name) VALUES(696, 'Pivotal')";
+		String sql = "INSERT INTO hr.depts (deptno, department_name) VALUES(696, 'Pivotal')";
 //		String sql = "INSERT INTO hr.depts_journal\n " +
 //				"(deptno, version_number, subsequent_version_number, department_name)\n " +
 //				"VALUES(666, TIMESTAMP '2017-03-09 08:07:22', NULL, 'Pivotal')";
