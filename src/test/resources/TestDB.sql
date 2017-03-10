@@ -3,7 +3,7 @@ CREATE SCHEMA calcite_sql_rewriter_integration_test;
 
 CREATE TABLE calcite_sql_rewriter_integration_test.depts_journal (
   deptno                    SERIAL                   NOT NULL,
-  department_name           TEXT                     NOT NULL,
+  department_name           TEXT                     NULL     DEFAULT NULL, -- Nullable test column
   version_number            TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
   subsequent_version_number TIMESTAMP WITH TIME ZONE NULL     DEFAULT NULL,
   PRIMARY KEY (deptno, version_number)
