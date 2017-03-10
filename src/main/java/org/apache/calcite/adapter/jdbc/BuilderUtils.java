@@ -15,6 +15,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 class BuilderUtils {
+	private BuilderUtils() {
+		throw new UnsupportedOperationException();
+	}
+
 	static RexNode makeOver(
 			RelBuilder relBuilder,
 			SqlAggFunction operator,
@@ -48,7 +52,7 @@ class BuilderUtils {
 			boolean nullWhenCountZero
 	) {
 		List<RelDataType> types = new ArrayList<>(exprs.size());
-		for(RexNode n : exprs) {
+		for (RexNode n : exprs) {
 			types.add(n.getType());
 		}
 		return relBuilder.getRexBuilder().makeOver(
@@ -68,7 +72,7 @@ class BuilderUtils {
 	static void projectToMatch(RelBuilder relBuilder, RelDataType row) {
 		List<String> originalFieldNames = row.getFieldNames();
 		List<RexNode> mappedFields = new ArrayList<>();
-		for(String fieldName : originalFieldNames) {
+		for (String fieldName : originalFieldNames) {
 			mappedFields.add(relBuilder.field(fieldName));
 		}
 		relBuilder.project(mappedFields);
@@ -81,9 +85,5 @@ class BuilderUtils {
 		fields.add(field);
 		relBuilder.project(fields);
 		return relBuilder.field(fields.size() - 1);
-	}
-
-	private BuilderUtils() {
-		throw new UnsupportedOperationException();
 	}
 }

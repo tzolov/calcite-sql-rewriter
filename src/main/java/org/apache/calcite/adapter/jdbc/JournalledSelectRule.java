@@ -20,12 +20,12 @@ import java.util.List;
 public class JournalledSelectRule implements BasicForcedRule {
 	@Override
 	public RelNode apply(RelNode originalScan, RelBuilderFactory relBuilderFactory) {
-		if(!(originalScan instanceof JdbcTableScan)) {
+		if (!(originalScan instanceof JdbcTableScan)) {
 			return null;
 		}
 
 		JdbcTable table = ((JdbcTableScan) originalScan).jdbcTable;
-		if(!(table instanceof JournalledJdbcTable)) {
+		if (!(table instanceof JournalledJdbcTable)) {
 			// Not a journalled table; nothing to do
 			return null;
 		}

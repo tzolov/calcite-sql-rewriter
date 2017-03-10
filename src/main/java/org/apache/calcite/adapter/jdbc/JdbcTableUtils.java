@@ -5,13 +5,16 @@ import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelRoot;
 import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.schema.Schema;
 import org.apache.calcite.sql.SqlIdentifier;
 
 import java.lang.reflect.Field;
 import java.util.List;
 
 class JdbcTableUtils {
+	private JdbcTableUtils() {
+		throw new UnsupportedOperationException();
+	}
+
 	private static Object get(JdbcTable table, String fieldName) {
 		try {
 			Field field = JdbcTable.class.getDeclaredField(fieldName);
@@ -20,10 +23,6 @@ class JdbcTableUtils {
 		} catch (NoSuchFieldException | IllegalAccessException e) {
 			throw new RuntimeException(e);
 		}
-	}
-
-	static Schema getSchema(JdbcTable table) {
-		return (Schema) get(table, "jdbcSchema");
 	}
 
 	static String getCatalogName(JdbcTable table) {
@@ -53,9 +52,5 @@ class JdbcTableUtils {
 			}
 		};
 		return table.toRel(toRelContext, relOptTable);
-	}
-
-	private JdbcTableUtils() {
-		throw new UnsupportedOperationException();
 	}
 }

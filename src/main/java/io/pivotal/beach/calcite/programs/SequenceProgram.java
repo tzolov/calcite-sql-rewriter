@@ -21,10 +21,6 @@ public class SequenceProgram implements Program {
 		this.programs = ImmutableList.copyOf(programs);
 	}
 
-	public ImmutableList<Program> getPrograms() {
-		return programs;
-	}
-
 	// Use with Hook.PROGRAM.add
 	@SuppressWarnings("Guava") // Must conform to Calcite's API
 	public static Function<Holder<Program>, Void> prepend(Program program) {
@@ -39,6 +35,10 @@ public class SequenceProgram implements Program {
 			holder.set(new SequenceProgram(program, chain));
 			return null;
 		};
+	}
+
+	public ImmutableList<Program> getPrograms() {
+		return programs;
 	}
 
 	public RelNode run(

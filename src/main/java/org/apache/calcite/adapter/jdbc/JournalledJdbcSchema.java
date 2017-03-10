@@ -17,11 +17,11 @@ import java.util.Map;
 import java.util.Set;
 
 public class JournalledJdbcSchema extends JdbcSchema {
-	private ImmutableMap<String, JdbcTable> tableMap;
-	private final Map<String,String[]> journalledTableKeys;
+	private final Map<String, String[]> journalledTableKeys;
 	private final String journalSuffix;
 	private final String versionField;
 	private final String subsequentVersionField;
+	private ImmutableMap<String, JdbcTable> tableMap;
 
 	private JournalledJdbcSchema(
 			DataSource dataSource,
@@ -42,21 +42,21 @@ public class JournalledJdbcSchema extends JdbcSchema {
 		Object defaultKeys = operand.get("journalDefaultKey");
 		Object tables = operand.get("journalTables");
 		if (tables instanceof Map) {
-			for (Map.Entry<?,?> entry : ((Map<?,?>) tables).entrySet()) {
+			for (Map.Entry<?, ?> entry : ((Map<?, ?>) tables).entrySet()) {
 				String name = (String) entry.getKey();
 				Object keys = entry.getValue();
-				if(keys == null) {
+				if (keys == null) {
 					keys = defaultKeys;
 				}
 				String[] parsedKeys;
-				if(keys instanceof String) {
+				if (keys instanceof String) {
 					parsedKeys = new String[]{(String) keys};
-				} else if(keys instanceof Collection) {
+				} else if (keys instanceof Collection) {
 					parsedKeys = new String[((Collection<?>) keys).size()];
 					int i = 0;
-					for(Object key : (Collection<?>) keys) {
+					for (Object key : (Collection<?>) keys) {
 						parsedKeys[i] = (String) key;
-						i ++;
+						i++;
 					}
 				} else {
 					throw new IllegalArgumentException("No primary key given for table: " + name);
@@ -64,14 +64,6 @@ public class JournalledJdbcSchema extends JdbcSchema {
 				journalledTableKeys.put(name, parsedKeys);
 			}
 		}
-	}
-
-	public String getVersionField() {
-		return versionField;
-	}
-
-	public String getSubsequentVersionField() {
-		return subsequentVersionField;
 	}
 
 	// Copied from JdbcSchema with modifications
@@ -103,6 +95,14 @@ public class JournalledJdbcSchema extends JdbcSchema {
 		return new JournalledJdbcSchema(dataSource, dialect, convention, catalog, schema, operand);
 	}
 
+	public String getVersionField() {
+		return versionField;
+	}
+
+	public String getSubsequentVersionField() {
+		return subsequentVersionField;
+	}
+
 	@Override
 	public Table getTable(String name) {
 		return getTableMap(false).get(name);
@@ -122,7 +122,7 @@ public class JournalledJdbcSchema extends JdbcSchema {
 			String schemaName,
 			String tableName
 	) throws SQLException {
-		if(journalledTableKeys.containsKey(tableName)) {
+		if (journalledTableKeys.containsKey(tableName)) {
 			// 1: Find columns for journal table
 			RelDataType relDataType = super
 					.getRelDataType(metaData, catalogName, schemaName, journalNameFor(tableName))
@@ -136,9 +136,9 @@ public class JournalledJdbcSchema extends JdbcSchema {
 			RelDataTypeFactory.FieldInfoBuilder fieldInfo = new SqlTypeFactoryImpl(RelDataTypeSystem.DEFAULT).builder();
 
 			// 2: Filter out journal-implementation columns
-			for(RelDataTypeField field : relDataType.getFieldList()) {
+			for (RelDataTypeField field : relDataType.getFieldList()) {
 				String fieldName = field.getName();
-				if(fieldName.equals(versionField) || fieldName.equals(subsequentVersionField)) {
+				if (fieldName.equals(versionField) || fieldName.equals(subsequentVersionField)) {
 					continue;
 				}
 				fieldInfo.add(field);
@@ -162,7 +162,7 @@ public class JournalledJdbcSchema extends JdbcSchema {
 		// 1: Get all tables from the DB as usual
 		Set<String> rawTableNames = super.getTableNames(); // Forces computeTables
 		Map<String, JdbcTable> tables = new HashMap<>();
-		for(String rawTableName : rawTableNames) {
+		for (String rawTableName : rawTableNames) {
 			tables.put(rawTableName, (JdbcTable) super.getTable(rawTableName));
 		}
 
@@ -170,9 +170,9 @@ public class JournalledJdbcSchema extends JdbcSchema {
 		tables.keySet().removeAll(journalledTableKeys.keySet());
 
 		// 3: For each table in the journalled list, generate a fake table from its journal
-		for(String virtualName : journalledTableKeys.keySet()) {
+		for (String virtualName : journalledTableKeys.keySet()) {
 			JdbcTable journalTable = tables.get(journalNameFor(virtualName));
-			if(journalTable != null) {
+			if (journalTable != null) {
 				tables.put(virtualName, new JournalledJdbcTable(
 						virtualName,
 						this,
