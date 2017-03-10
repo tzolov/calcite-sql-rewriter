@@ -19,7 +19,9 @@ public class InsertIntegrationTest {
 	@SuppressWarnings("Guava") // Must conform to Calcite's API
 	private Function<Holder<Program>, Void> program = SequenceProgram.prepend(
 			new ForcedRulesProgram(new JdbcRelBuilder.FactoryFactory(),
-					new JournalledInsertRule()
+					new JournalledInsertRule(),
+					new JournalledUpdateRule(),
+					new JournalledDeleteRule()
 			)
 	);
 
@@ -27,7 +29,6 @@ public class InsertIntegrationTest {
 	public static void rebuildTestDatabase() throws Exception {
 		TargetDatabase.rebuild();
 	}
-
 
 	@Test
 	public void testRewritingDeptsWithoutAllColumns() {

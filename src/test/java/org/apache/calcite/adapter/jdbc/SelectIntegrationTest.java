@@ -18,7 +18,9 @@ public class SelectIntegrationTest {
 	@SuppressWarnings("Guava") // Must conform to Calcite's API
 	private Function<Holder<Program>, Void> program = SequenceProgram.prepend(
 			new ForcedRulesProgram(new JdbcRelBuilder.FactoryFactory(),
-					new JournalledSelectRule()
+					new JournalledInsertRule(),
+					new JournalledUpdateRule(),
+					new JournalledDeleteRule()
 			)
 	);
 
@@ -38,7 +40,6 @@ public class SelectIntegrationTest {
 						"    JdbcFilter(condition=[AND(=($1, $3), IS NULL($2))])\n" +
 						"      JdbcProject(empid=[$0], version_number=[$2], subsequent_version_number=[$3], $f6=[MAX($2) OVER (PARTITION BY $0 ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)])\n" +
 						"        JdbcTableScan(table=[[" + virtualSchemaName + ", emps_journal]])\n")
-				.runs()
 				.planHasSql("SELECT \"empid\"\n" +
 						"FROM (SELECT \"empid\", \"version_number\", \"subsequent_version_number\", MAX(\"version_number\") OVER (PARTITION BY \"empid\" ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS \"$f6\"\n" +
 						"FROM \"" + actualSchemaName + "\".\"emps_journal\") AS \"t\"\n" +
@@ -51,6 +52,19 @@ public class SelectIntegrationTest {
 	}
 
 	@Test
+	public void testAllColumns() {
+		CalciteAssert
+				.model(TargetDatabase.JOURNALLED_MODEL)
+				.query("SELECT * FROM \"" + virtualSchemaName + "\".\"emps\"")
+				.withHook(Hook.PROGRAM, program)
+				.returns("empid=1; deptno=2; first_name=Peter; last_name=Pan\n" +
+						"empid=2; deptno=1; first_name=Ian; last_name=Bibian\n" +
+						"empid=3; deptno=2; first_name=Victor; last_name=Strugatski\n" +
+						"empid=4; deptno=2; first_name=Stan; last_name=Ban\n" +
+						"empid=6; deptno=4; first_name=Ivan; last_name=Baraban\n");
+	}
+
+	@Test
 	public void testComplexRewriting() {
 		CalciteAssert
 				.model(TargetDatabase.JOURNALLED_MODEL)
@@ -60,7 +74,6 @@ public class SelectIntegrationTest {
 						"GROUP BY \"d\".\"deptno\"\n" +
 						"HAVING COUNT(*) > 1")
 				.withHook(Hook.PROGRAM, program)
-				.runs()
 				.returns("deptno=2\n");
 	}
 
@@ -72,11 +85,9 @@ public class SelectIntegrationTest {
 				.withHook(Hook.PROGRAM, program)
 				.explainContains("JdbcToEnumerableConverter\n" +
 						"  JdbcTableScan(table=[[" + virtualSchemaName + ", non_journalled]])\n")
-				.runs()
 				.planHasSql("SELECT *\n" +
 						"FROM \"" + actualSchemaName + "\".\"non_journalled\"")
 				.returns("id=1\n" +
 						"id=2\n");
 	}
-
 }

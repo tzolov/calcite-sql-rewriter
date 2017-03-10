@@ -72,17 +72,6 @@ public class JdbcRelBuilder extends RelBuilder {
 		);
 	}
 
-	public JdbcRelBuilder projectToMatch(RelDataType row) {
-		List<String> originalFieldNames = row.getFieldNames();
-		List<RexNode> mappedFields = new ArrayList<>();
-		for (String fieldName : originalFieldNames) {
-			mappedFields.add(field(fieldName));
-		}
-		project(mappedFields);
-		convert(row, true); // Patch nullability of columns, etc.
-		return this;
-	}
-
 	public RexInputRef appendField(RexNode field) {
 		List<RexNode> fields = new ArrayList<>();
 		fields.addAll(fields());
@@ -100,7 +89,7 @@ public class JdbcRelBuilder extends RelBuilder {
 	public static class Factory implements JdbcRelBuilderFactory {
 		private Context context;
 
-		private Factory(Context context) {
+		public Factory(Context context) {
 			this.context = context;
 		}
 
