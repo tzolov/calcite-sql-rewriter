@@ -23,7 +23,8 @@ CREATE TABLE calcite_sql_rewriter_integration_test.non_journalled (
   id SERIAL NOT NULL PRIMARY KEY
 );
 
-CREATE VIEW calcite_sql_rewriter_integration_test.depts AS SELECT * FROM emps_journal; -- A view which should be ignored
+CREATE VIEW calcite_sql_rewriter_integration_test.depts AS
+  SELECT * FROM calcite_sql_rewriter_integration_test.emps_journal; -- A view which should be ignored
 
 INSERT INTO calcite_sql_rewriter_integration_test.depts_journal (deptno, department_name) VALUES
   (1, 'Dep1'),
