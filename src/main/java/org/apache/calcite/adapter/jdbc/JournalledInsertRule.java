@@ -1,13 +1,12 @@
 package org.apache.calcite.adapter.jdbc;
 
-import io.pivotal.beach.calcite.programs.BasicForcedRule;
-import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilder;
 import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilderFactory;
-import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.TableModify.Operation;
 import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.logical.LogicalTableModify;
+
+import io.pivotal.beach.calcite.programs.BasicForcedRule;
 
 /**
  * Created by tzoloc on 11/25/16.
