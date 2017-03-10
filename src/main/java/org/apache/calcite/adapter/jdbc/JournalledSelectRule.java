@@ -2,16 +2,11 @@ package org.apache.calcite.adapter.jdbc;
 
 import com.google.common.collect.ImmutableList;
 import io.pivotal.beach.calcite.programs.BasicForcedRule;
-import org.apache.calcite.plan.RelOptCluster;
-import org.apache.calcite.plan.RelOptSchema;
+import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilder;
+import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilderFactory;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
-import org.apache.calcite.tools.RelBuilder;
-import org.apache.calcite.tools.RelBuilderFactory;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by tzoloc on 11/25/16.
@@ -19,7 +14,7 @@ import java.util.List;
 
 public class JournalledSelectRule implements BasicForcedRule {
 	@Override
-	public RelNode apply(RelNode originalScan, RelBuilderFactory relBuilderFactory) {
+	public RelNode apply(RelNode originalScan, JdbcRelBuilderFactory relBuilderFactory) {
 		if (!(originalScan instanceof JdbcTableScan)) {
 			return null;
 		}
@@ -31,29 +26,19 @@ public class JournalledSelectRule implements BasicForcedRule {
 		}
 		JournalledJdbcTable journalledTable = (JournalledJdbcTable) table;
 
-		RelOptSchema relOptSchema = originalScan.getTable().getRelOptSchema();
-
-		RelOptCluster cluster = originalScan.getCluster();
-		RelBuilder relBuilder = relBuilderFactory.create(cluster, relOptSchema);
+		JdbcRelBuilder relBuilder = relBuilderFactory.create(
+				originalScan.getCluster(),
+				originalScan.getTable().getRelOptSchema()
+		);
 
 		// FROM <table_journal>
-
-		String journalName = JdbcTableUtils.getTableName(journalledTable.getJournalTable());
-		List<String> fqJournalName = new ArrayList<>(originalScan.getTable().getQualifiedName());
-		fqJournalName.set(fqJournalName.size() - 1, journalName);
-
-		relBuilder.push(JdbcTableUtils.makeTableScan(
-				cluster,
-				relOptSchema.getTableForMember(fqJournalName),
-				journalledTable.getJournalTable()
-		));
+		relBuilder.scanJdbc(journalledTable.getJournalTable());
 
 		RexInputRef versionField = relBuilder.field(journalledTable.getVersionField());
 		RexInputRef subsequentVersionField = relBuilder.field(journalledTable.getSubsequentVersionField());
 
 		// <maxVersionField> = MAX(<version_number>) OVER (PARTITION BY <primary_key>)
-		RexInputRef maxVersionField = BuilderUtils.appendField(relBuilder, BuilderUtils.makeOver(
-				relBuilder,
+		RexInputRef maxVersionField = relBuilder.appendField(relBuilder.makeOver(
 				SqlStdOperatorTable.MAX,
 				ImmutableList.of(versionField),
 				relBuilder.fields(journalledTable.getKeys())
@@ -66,7 +51,7 @@ public class JournalledSelectRule implements BasicForcedRule {
 		);
 
 		// SELECT <originally_requested_columns>
-		BuilderUtils.projectToMatch(relBuilder, originalScan.getRowType());
+		relBuilder.projectToMatch(originalScan.getRowType());
 
 		return relBuilder.build();
 	}

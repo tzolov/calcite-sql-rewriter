@@ -1,16 +1,20 @@
 package org.apache.calcite.adapter.jdbc;
 
 import org.apache.calcite.plan.RelOptCluster;
+import org.apache.calcite.plan.RelOptSchema;
 import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelRoot;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.schema.Table;
 import org.apache.calcite.sql.SqlIdentifier;
 
 import java.lang.reflect.Field;
+import java.util.Collections;
 import java.util.List;
 
-class JdbcTableUtils {
+@SuppressWarnings("WeakerAccess") // Public API
+public class JdbcTableUtils {
 	private JdbcTableUtils() {
 		throw new UnsupportedOperationException();
 	}
@@ -39,7 +43,7 @@ class JdbcTableUtils {
 		return identifier.names.get(identifier.names.size() - 1);
 	}
 
-	static RelNode makeTableScan(RelOptCluster cluster, RelOptTable relOptTable, JdbcTable table) {
+	static RelNode toRel(RelOptCluster cluster, RelOptSchema relOptSchema, JdbcTable table) {
 		RelOptTable.ToRelContext toRelContext = new RelOptTable.ToRelContext() {
 			@Override
 			public RelOptCluster getCluster() {
@@ -51,6 +55,17 @@ class JdbcTableUtils {
 				throw new UnsupportedOperationException();
 			}
 		};
-		return table.toRel(toRelContext, relOptTable);
+
+		return table.toRel(
+				toRelContext,
+				relOptSchema.getTableForMember(Collections.singletonList(getTableName(table)))
+		);
+	}
+
+	public static RelNode toRel(RelOptCluster cluster, RelOptSchema relOptSchema, Table table) {
+		if(!(table instanceof JdbcTable)) {
+			throw new UnsupportedOperationException();
+		}
+		return toRel(cluster, relOptSchema, (JdbcTable) table);
 	}
 }

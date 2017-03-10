@@ -1,8 +1,8 @@
 package io.pivotal.beach.calcite.programs;
 
+import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilderFactory;
 import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.tools.RelBuilderFactory;
 
 public interface BasicForcedRule {
-	RelNode apply(RelNode originalScan, RelBuilderFactory relBuilderFactory);
+	RelNode apply(RelNode node, JdbcRelBuilderFactory relBuilderFactory);
 }

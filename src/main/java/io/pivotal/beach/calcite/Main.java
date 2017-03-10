@@ -2,9 +2,8 @@ package io.pivotal.beach.calcite;
 
 import io.pivotal.beach.calcite.programs.ForcedRulesProgram;
 import io.pivotal.beach.calcite.programs.SequenceProgram;
-
 import org.apache.calcite.adapter.jdbc.JournalledInsertRule;
-import org.apache.calcite.adapter.jdbc.JournalledSelectRule;
+import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilder;
 import org.apache.calcite.jdbc.CalciteConnection;
 import org.apache.calcite.runtime.Hook;
 
@@ -16,7 +15,7 @@ import java.util.Properties;
 
 public class Main {
 	public static void main(String[] argv) throws Exception {
-		Hook.PROGRAM.add(SequenceProgram.prepend(new ForcedRulesProgram(
+		Hook.PROGRAM.add(SequenceProgram.prepend(new ForcedRulesProgram(new JdbcRelBuilder.FactoryFactory(),
 				//new JournalledSelectRule()
 				new JournalledInsertRule()
 		)));

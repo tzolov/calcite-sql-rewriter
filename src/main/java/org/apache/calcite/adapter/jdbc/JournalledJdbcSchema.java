@@ -95,11 +95,11 @@ public class JournalledJdbcSchema extends JdbcSchema {
 		return new JournalledJdbcSchema(dataSource, dialect, convention, catalog, schema, operand);
 	}
 
-	public String getVersionField() {
+	String getVersionField() {
 		return versionField;
 	}
 
-	public String getSubsequentVersionField() {
+	String getSubsequentVersionField() {
 		return subsequentVersionField;
 	}
 

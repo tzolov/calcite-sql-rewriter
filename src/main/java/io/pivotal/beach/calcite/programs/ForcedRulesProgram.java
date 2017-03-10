@@ -1,10 +1,10 @@
 package io.pivotal.beach.calcite.programs;
 
+import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilderFactory;
+import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilderFactoryFactory;
 import org.apache.calcite.plan.*;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.tools.Program;
-import org.apache.calcite.tools.RelBuilder;
-import org.apache.calcite.tools.RelBuilderFactory;
 import org.apache.calcite.util.Litmus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,9 +14,11 @@ import java.util.List;
 public class ForcedRulesProgram implements Program {
 	private static final Logger logger = LoggerFactory.getLogger(ForcedRulesProgram.class);
 
+	private final JdbcRelBuilderFactoryFactory relBuilderFactoryFactory;
 	private final BasicForcedRule[] rules;
 
-	public ForcedRulesProgram(BasicForcedRule... rules) {
+	public ForcedRulesProgram(JdbcRelBuilderFactoryFactory relBuilderFactoryFactory, BasicForcedRule... rules) {
+		this.relBuilderFactoryFactory = relBuilderFactoryFactory;
 		this.rules = rules;
 	}
 
@@ -29,10 +31,10 @@ public class ForcedRulesProgram implements Program {
 			List<RelOptLattice> lattices
 	) {
 		logger.debug("Running forced rules on:\n" + RelOptUtil.toString(rel));
-		return replace(rel, rules, RelBuilder.proto(planner.getContext()));
+		return replace(rel, rules, relBuilderFactoryFactory.create(planner.getContext()));
 	}
 
-	private RelNode replace(RelNode original, BasicForcedRule[] rules, RelBuilderFactory relBuilderFactory) {
+	private RelNode replace(RelNode original, BasicForcedRule[] rules, JdbcRelBuilderFactory relBuilderFactory) {
 		RelNode p = original;
 		for (BasicForcedRule rule : rules) {
 			RelNode updated = rule.apply(p, relBuilderFactory);
@@ -43,8 +45,8 @@ public class ForcedRulesProgram implements Program {
 				);
 				// Must maintain row types so that nothing explodes
 				RelOptUtil.equal(
-						"rowtype of original", p.getRowType(),
-						"rowtype of replaced", updated.getRowType(),
+						"RowType of original", p.getRowType(),
+						"RowType of replaced", updated.getRowType(),
 						Litmus.THROW
 				);
 				p = updated;

@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
+@SuppressWarnings("WeakerAccess") // Public API
 public class SequenceProgram implements Program {
 	private static final Logger logger = LoggerFactory.getLogger(SequenceProgram.class);
 

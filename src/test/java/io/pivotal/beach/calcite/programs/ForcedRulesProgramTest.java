@@ -1,11 +1,13 @@
 package io.pivotal.beach.calcite.programs;
 
 import com.google.common.collect.ImmutableList;
+import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilderFactory;
+import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilderFactoryFactory;
+import org.apache.calcite.plan.Context;
 import org.apache.calcite.plan.RelOptPlanner;
 import org.apache.calcite.plan.RelTraitSet;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.tools.Program;
-import org.apache.calcite.tools.RelBuilderFactory;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -14,24 +16,33 @@ import org.mockito.Mockito;
 import java.util.Collections;
 
 public class ForcedRulesProgramTest {
+	private Context context;
 	private RelOptPlanner planner;
 	private RelTraitSet relTraitSet;
+	private JdbcRelBuilderFactoryFactory superFactory;
+	private JdbcRelBuilderFactory miniFactory;
 	private BasicForcedRule rule;
 	private Program program;
 	private RelNode inNode;
 
 	@Before
 	public void setupMocks() {
+		context = Mockito.mock(Context.class);
 		planner = Mockito.mock(RelOptPlanner.class);
 		relTraitSet = RelTraitSet.createEmpty();
+		superFactory = Mockito.mock(JdbcRelBuilderFactoryFactory.class);
+		miniFactory = Mockito.mock(JdbcRelBuilderFactory.class);
 		rule = Mockito.mock(BasicForcedRule.class);
-		program = new ForcedRulesProgram(rule);
+		program = new ForcedRulesProgram(superFactory, rule);
 		inNode = Mockito.mock(RelNode.class);
+
+		Mockito.doReturn(context).when(planner).getContext();
+		Mockito.doReturn(miniFactory).when(superFactory).create(Mockito.same(context));
 	}
 
 	@Test
 	public void testEmptyProgram_doesNothing() {
-		program = new ForcedRulesProgram();
+		program = new ForcedRulesProgram(superFactory);
 		Mockito.doReturn(ImmutableList.of()).when(inNode).getInputs();
 
 		RelNode result = program.run(planner, inNode, relTraitSet, Collections.emptyList(), Collections.emptyList());
@@ -44,8 +55,7 @@ public class ForcedRulesProgramTest {
 	public void testRun_sendsRelBuilderFactory() {
 		program.run(planner, inNode, relTraitSet, Collections.emptyList(), Collections.emptyList());
 
-		// Requirement of static RelBuilder.proto call means we can't check much about this
-		Mockito.verify(rule).apply(Mockito.any(), Mockito.notNull(RelBuilderFactory.class));
+		Mockito.verify(rule).apply(Mockito.any(), Mockito.same(miniFactory));
 	}
 
 	@Test

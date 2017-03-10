@@ -1,5 +1,8 @@
 package org.apache.calcite.adapter.jdbc;
 
+import io.pivotal.beach.calcite.programs.BasicForcedRule;
+import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilder;
+import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilderFactory;
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelOptSchema;
 import org.apache.calcite.rel.RelNode;
@@ -7,10 +10,6 @@ import org.apache.calcite.rel.core.TableModify.Operation;
 import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.logical.LogicalTableModify;
 import org.apache.calcite.rel.logical.LogicalValues;
-import org.apache.calcite.tools.RelBuilder;
-import org.apache.calcite.tools.RelBuilderFactory;
-
-import io.pivotal.beach.calcite.programs.BasicForcedRule;
 
 /**
  * Created by tzoloc on 11/25/16.
@@ -18,7 +17,7 @@ import io.pivotal.beach.calcite.programs.BasicForcedRule;
 
 public class JournalledInsertRule implements BasicForcedRule {
 	@Override
-	public RelNode apply(RelNode originalRel, RelBuilderFactory relBuilderFactory) {
+	public RelNode apply(RelNode originalRel, JdbcRelBuilderFactory relBuilderFactory) {
 
 		if (!(originalRel instanceof LogicalTableModify)) {
 			return null;
@@ -41,7 +40,7 @@ public class JournalledInsertRule implements BasicForcedRule {
 
 		RelOptCluster cluster = originalRel.getCluster();
 
-		RelBuilder relBuilder = relBuilderFactory.create(cluster, relOptSchema);
+		JdbcRelBuilder relBuilder = relBuilderFactory.create(cluster, relOptSchema);
 
 		relBuilder.values(logicalValues.getTuples(), logicalValues.getRowType());
 

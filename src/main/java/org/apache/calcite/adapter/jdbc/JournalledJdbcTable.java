@@ -4,12 +4,12 @@ import com.google.common.collect.ImmutableList;
 
 import java.util.List;
 
-public class JournalledJdbcTable extends JdbcTable {
+class JournalledJdbcTable extends JdbcTable {
 	private final JdbcTable journalTable;
 	private final JournalledJdbcSchema journalledJdbcSchema;
 	private final ImmutableList<String> keyColumnNames;
 
-	public JournalledJdbcTable(
+	JournalledJdbcTable(
 			String tableName,
 			JournalledJdbcSchema journalledJdbcSchema,
 			JdbcTable journalTable,
@@ -27,19 +27,19 @@ public class JournalledJdbcTable extends JdbcTable {
 		this.keyColumnNames = ImmutableList.copyOf(keyColumnNames);
 	}
 
-	public JdbcTable getJournalTable() {
+	JdbcTable getJournalTable() {
 		return journalTable;
 	}
 
-	public List<String> getKeys() {
+	List<String> getKeys() {
 		return keyColumnNames;
 	}
 
-	public String getVersionField() {
+	String getVersionField() {
 		return journalledJdbcSchema.getVersionField();
 	}
 
-	public String getSubsequentVersionField() {
+	String getSubsequentVersionField() {
 		return journalledJdbcSchema.getSubsequentVersionField();
 	}
 }
