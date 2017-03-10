@@ -32,7 +32,10 @@ public class JournalledSelectRule implements BasicForcedRule {
 		);
 
 		// FROM <table_journal>
-		relBuilder.scanJdbc(originalRel.getTable(), journalledTable.getJournalTable());
+		relBuilder.scanJdbc(
+				journalledTable.getJournalTable(),
+				JdbcTableUtils.getQualifiedName(originalRel.getTable(), journalledTable.getJournalTable())
+		);
 
 		RexInputRef versionField = relBuilder.field(journalledTable.getVersionField());
 		RexInputRef subsequentVersionField = relBuilder.field(journalledTable.getSubsequentVersionField());

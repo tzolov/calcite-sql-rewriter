@@ -1,5 +1,6 @@
 package org.apache.calcite.adapter.jdbc;
 
+import com.google.common.collect.ImmutableList;
 import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilder;
 import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilderFactory;
 import org.apache.calcite.plan.RelOptCluster;
@@ -9,6 +10,8 @@ import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rex.RexInputRef;
+import org.apache.calcite.sql.SqlIdentifier;
+import org.apache.calcite.sql.parser.SqlParserPos;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -19,6 +22,7 @@ public class JournalledSelectRuleTest {
 	private JdbcRelBuilder relBuilder;
 	private JournalledSelectRule rule;
 	private JournalledJdbcTable table;
+	private JdbcTable journalTable;
 	private JdbcTableScan inTableScan;
 	private RelOptTable relOptTable;
 	private RelOptCluster relOptCluster;
@@ -29,6 +33,7 @@ public class JournalledSelectRuleTest {
 		relBuilderFactory = Mockito.mock(JdbcRelBuilderFactory.class);
 		relBuilder = Mockito.mock(JdbcRelBuilder.class);
 		table = Mockito.mock(JournalledJdbcTable.class);
+		journalTable = Mockito.mock(JdbcTable.class);
 		rule = new JournalledSelectRule();
 		relOptTable = Mockito.mock(RelOptTable.class);
 		relOptCluster = Mockito.mock(RelOptCluster.class);
@@ -37,13 +42,21 @@ public class JournalledSelectRuleTest {
 		RexInputRef versionField = Mockito.mock(RexInputRef.class);
 		RexInputRef subsequentVersionField = Mockito.mock(RexInputRef.class);
 
+		Mockito.doReturn(relBuilder).when(relBuilderFactory).create(Mockito.same(relOptCluster), Mockito.same(relOptSchema));
 		Mockito.doReturn(Mockito.mock(RelOptPlanner.class)).when(relOptCluster).getPlanner();
 		Mockito.doReturn(relOptSchema).when(relOptTable).getRelOptSchema();
-		Mockito.doReturn(relBuilder).when(relBuilderFactory).create(Mockito.same(relOptCluster), Mockito.same(relOptSchema));
+		Mockito.doReturn(ImmutableList.of("theSchema", "theView")).when(relOptTable).getQualifiedName();
+		Mockito.doReturn(new SqlIdentifier(
+				ImmutableList.of("wrongSchema", "theJournal"),
+				null,
+				new SqlParserPos(0, 0),
+				null
+		)).when(journalTable).tableName();
 		Mockito.doReturn("myV").when(table).getVersionField();
 		Mockito.doReturn("mySV").when(table).getSubsequentVersionField();
 		Mockito.doReturn(versionField).when(relBuilder).field(Mockito.eq("myV"));
 		Mockito.doReturn(subsequentVersionField).when(relBuilder).field(Mockito.eq("mySV"));
+		Mockito.doReturn(journalTable).when(table).getJournalTable();
 
 		inTableScan = new JdbcTableScan(relOptCluster, relOptTable, table, null) {
 			@Override
@@ -80,12 +93,9 @@ public class JournalledSelectRuleTest {
 
 	@Test
 	public void testApply_changesTableToScanAndCastsResult() {
-		JdbcTable journalTable = Mockito.mock(JdbcTable.class);
-		Mockito.doReturn(journalTable).when(table).getJournalTable();
-
 		rule.apply(inTableScan, relBuilderFactory);
 
-		Mockito.verify(relBuilder).scanJdbc(Mockito.same(relOptTable), Mockito.same(journalTable));
+		Mockito.verify(relBuilder).scanJdbc(Mockito.same(journalTable), Mockito.any());
 		Mockito.verify(relBuilder).projectToMatch(Mockito.same(originalRowType));
 	}
 }

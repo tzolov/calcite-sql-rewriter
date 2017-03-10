@@ -43,7 +43,17 @@ public class JdbcTableUtils {
 		return identifier.names.get(identifier.names.size() - 1);
 	}
 
-	static RelNode toRel(RelOptCluster cluster, RelOptSchema relOptSchema, RelOptTable sibling, JdbcTable table) {
+	static List<String> getQualifiedName(RelOptTable sibling, JdbcTable table) {
+		List<String> name = new ArrayList<>();
+		if(sibling != null) {
+			name.addAll(sibling.getQualifiedName());
+			name.remove(name.size() - 1);
+		}
+		name.add(getTableName(table));
+		return name;
+	}
+
+	static RelNode toRel(RelOptCluster cluster, RelOptSchema relOptSchema, JdbcTable table, List<String> qualifiedName) {
 		RelOptTable.ToRelContext toRelContext = new RelOptTable.ToRelContext() {
 			@Override
 			public RelOptCluster getCluster() {
@@ -56,22 +66,16 @@ public class JdbcTableUtils {
 			}
 		};
 
-		List<String> name = new ArrayList<>();
-		if(sibling != null) {
-			name.addAll(sibling.getQualifiedName());
-			name.remove(name.size() - 1);
-		}
-		name.add(getTableName(table));
 		return table.toRel(
 				toRelContext,
-				relOptSchema.getTableForMember(name)
+				relOptSchema.getTableForMember(qualifiedName)
 		);
 	}
 
-	public static RelNode toRel(RelOptCluster cluster, RelOptSchema relOptSchema, RelOptTable sibling, Table table) {
+	public static RelNode toRel(RelOptCluster cluster, RelOptSchema relOptSchema, Table table, List<String> qualifiedName) {
 		if(!(table instanceof JdbcTable)) {
 			throw new UnsupportedOperationException();
 		}
-		return toRel(cluster, relOptSchema, sibling, (JdbcTable) table);
+		return toRel(cluster, relOptSchema, (JdbcTable) table, qualifiedName);
 	}
 }

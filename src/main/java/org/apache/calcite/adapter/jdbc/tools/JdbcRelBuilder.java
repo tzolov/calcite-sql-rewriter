@@ -93,8 +93,8 @@ public class JdbcRelBuilder extends RelBuilder {
 	}
 
 	// Table MUST be a JdbcTable (cannot be typesafe since JdbcTable is package-private)
-	public JdbcRelBuilder scanJdbc(RelOptTable sibling, Table table) {
-		push(JdbcTableUtils.toRel(cluster, relOptSchema, sibling, table));
+	public JdbcRelBuilder scanJdbc(Table table, List<String> qualifiedName) {
+		push(JdbcTableUtils.toRel(cluster, relOptSchema, table, qualifiedName));
 		return this;
 	}
 
