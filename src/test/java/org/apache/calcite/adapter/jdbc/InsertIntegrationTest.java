@@ -84,18 +84,18 @@ public class InsertIntegrationTest {
 	public void testInsertSelect() {
 		CalciteAssert
 				.model(TargetDatabase.JOURNALLED_MODEL)
-				.query("INSERT INTO \"" + virtualSchemaName + "\".\"emps\" (\"empid\", \"deptno\") SELECT \"deptno\" + 1000, \"deptno\" FROM \"" + virtualSchemaName + "\".\"depts\"")
+				.query("INSERT INTO \"" + virtualSchemaName + "\".\"emps\" (\"empid\", \"last_name\", \"deptno\") SELECT \"deptno\" + 1000, 'added', \"deptno\" FROM \"" + virtualSchemaName + "\".\"depts\"")
 				.withHook(Hook.PROGRAM, program)
 				.explainContains("PLAN=JdbcToEnumerableConverter\n" +
-						"  JdbcTableModify(table=[[calcite_sql_rewriter_integration_test, emps_journal]], operation=[INSERT], flattened=[false])\n" +
-						"    JdbcProject(EXPR$0=[+($0, 1000)], deptno=[$0])\n" +
+						"  JdbcTableModify(table=[[" + virtualSchemaName + ", emps_journal]], operation=[INSERT], flattened=[false])\n" +
+						"    JdbcProject(EXPR$0=[+($0, 1000)], EXPR$1=['added'], deptno=[$0])\n" +
 						"      JdbcFilter(condition=[AND(=($1, $3), IS NULL($2))])\n" +
 						"        JdbcProject(deptno=[$0], version_number=[$2], subsequent_version_number=[$3], $f4=[MAX($2) OVER (PARTITION BY $0 ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)])\n" +
-						"          JdbcTableScan(table=[[calcite_sql_rewriter_integration_test, depts_journal]])\n")
-				.planUpdateHasSql("INSERT INTO \"calcite_sql_rewriter_integration_test\".\"emps_journal\" (\"empid\", \"deptno\")\n" +
-						"(SELECT \"deptno\" + 1000, \"deptno\"\n" +
+						"          JdbcTableScan(table=[[" + virtualSchemaName + ", depts_journal]])\n")
+				.planUpdateHasSql("INSERT INTO \"" + actualSchemaName + "\".\"emps_journal\" (\"EXPR$0\", \"EXPR$1\", \"deptno\")\n" +
+						"(SELECT \"deptno\" + 1000, 'added', \"deptno\"\n" +
 						"FROM (SELECT \"deptno\", \"version_number\", \"subsequent_version_number\", MAX(\"version_number\") OVER (PARTITION BY \"deptno\" ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS \"$f4\"\n" +
-						"FROM \"calcite_sql_rewriter_integration_test\".\"depts_journal\") AS \"t\"\n" +
+						"FROM \"" + actualSchemaName + "\".\"depts_journal\") AS \"t\"\n" +
 						"WHERE \"version_number\" = \"$f4\" AND \"subsequent_version_number\" IS NULL)", 4);
 	}
 
