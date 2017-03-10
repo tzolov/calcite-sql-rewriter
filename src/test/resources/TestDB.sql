@@ -23,35 +23,7 @@ CREATE TABLE calcite_sql_rewriter_integration_test.non_journalled (
   id SERIAL NOT NULL PRIMARY KEY
 );
 
-CREATE VIEW calcite_sql_rewriter_integration_test.depts AS
-  WITH link_last AS (
-      SELECT
-        *,
-        MAX(version_number)
-        OVER (PARTITION BY deptno) AS last_version_number
-      FROM calcite_sql_rewriter_integration_test.depts_journal
-  )
-  SELECT
-    deptno,
-    department_name
-  FROM link_last
-  WHERE subsequent_version_number IS NULL
-        AND version_number = last_version_number;
-
-CREATE VIEW calcite_sql_rewriter_integration_test.emps AS
-  WITH link_last AS (
-      SELECT
-        *,
-        MAX(version_number)
-        OVER (PARTITION BY empid) AS last_version_number
-      FROM calcite_sql_rewriter_integration_test.emps_journal
-  )
-  SELECT
-    empid,
-    deptno
-  FROM link_last
-  WHERE subsequent_version_number IS NULL
-        AND version_number = last_version_number;
+CREATE VIEW calcite_sql_rewriter_integration_test.depts AS SELECT * FROM emps_journal; -- A view which should be ignored
 
 INSERT INTO calcite_sql_rewriter_integration_test.depts_journal (deptno, department_name) VALUES
   (1, 'Dep1'),
