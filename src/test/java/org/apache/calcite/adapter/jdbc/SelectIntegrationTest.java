@@ -11,7 +11,9 @@ import org.apache.calcite.util.Holder;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class JournalledSelectRuleIntegrationTest {
+public class SelectIntegrationTest {
+	private static final String virtualSchemaName = "hr";
+	private static final String actualSchemaName = "calcite_sql_rewriter_integration_test";
 
 	@SuppressWarnings("Guava") // Must conform to Calcite's API
 	private Function<Holder<Program>, Void> program = SequenceProgram.prepend(
@@ -26,20 +28,20 @@ public class JournalledSelectRuleIntegrationTest {
 	}
 
 	@Test
-	public void testSelectRewriting() {
+	public void testRewriting() {
 		CalciteAssert
 				.model(TargetDatabase.JOURNALLED_MODEL)
-				.query("SELECT \"empid\" FROM \"hr\".\"emps\"")
+				.query("SELECT \"empid\" FROM \"" + virtualSchemaName + "\".\"emps\"")
 				.withHook(Hook.PROGRAM, program)
 				.explainContains("PLAN=JdbcToEnumerableConverter\n" +
 						"  JdbcProject(empid=[$0])\n" +
 						"    JdbcFilter(condition=[AND(=($1, $3), IS NULL($2))])\n" +
 						"      JdbcProject(empid=[$0], version_number=[$2], subsequent_version_number=[$3], $f6=[MAX($2) OVER (PARTITION BY $0 ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)])\n" +
-						"        JdbcTableScan(table=[[hr, emps_journal]])\n")
+						"        JdbcTableScan(table=[[" + virtualSchemaName + ", emps_journal]])\n")
 				.runs()
 				.planHasSql("SELECT \"empid\"\n" +
 						"FROM (SELECT \"empid\", \"version_number\", \"subsequent_version_number\", MAX(\"version_number\") OVER (PARTITION BY \"empid\" ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS \"$f6\"\n" +
-						"FROM \"calcite_sql_rewriter_integration_test\".\"emps_journal\") AS \"t\"\n" +
+						"FROM \"" + actualSchemaName + "\".\"emps_journal\") AS \"t\"\n" +
 						"WHERE \"version_number\" = \"$f6\" AND \"subsequent_version_number\" IS NULL")
 				.returns("empid=1\n" +
 						"empid=2\n" +
@@ -49,12 +51,12 @@ public class JournalledSelectRuleIntegrationTest {
 	}
 
 	@Test
-	public void testComplexSelectRewriting() {
+	public void testComplexRewriting() {
 		CalciteAssert
 				.model(TargetDatabase.JOURNALLED_MODEL)
 				.query("SELECT \"d\".\"deptno\"\n" +
-						"FROM \"hr\".\"emps\" AS \"e\"\n" +
-						"JOIN \"hr\".\"depts\" AS \"d\" ON \"e\".\"deptno\" = \"d\".\"deptno\"\n" +
+						"FROM \"" + virtualSchemaName + "\".\"emps\" AS \"e\"\n" +
+						"JOIN \"" + virtualSchemaName + "\".\"depts\" AS \"d\" ON \"e\".\"deptno\" = \"d\".\"deptno\"\n" +
 						"GROUP BY \"d\".\"deptno\"\n" +
 						"HAVING COUNT(*) > 1")
 				.withHook(Hook.PROGRAM, program)
@@ -63,16 +65,16 @@ public class JournalledSelectRuleIntegrationTest {
 	}
 
 	@Test
-	public void testSelectNonJournalled() {
+	public void testNonJournalled() {
 		CalciteAssert
 				.model(TargetDatabase.JOURNALLED_MODEL)
-				.query("SELECT * FROM \"hr\".\"non_journalled\"")
+				.query("SELECT * FROM \"" + virtualSchemaName + "\".\"non_journalled\"")
 				.withHook(Hook.PROGRAM, program)
 				.explainContains("JdbcToEnumerableConverter\n" +
-						"  JdbcTableScan(table=[[hr, non_journalled]])\n")
+						"  JdbcTableScan(table=[[" + virtualSchemaName + ", non_journalled]])\n")
 				.runs()
 				.planHasSql("SELECT *\n" +
-						"FROM \"calcite_sql_rewriter_integration_test\".\"non_journalled\"")
+						"FROM \"" + actualSchemaName + "\".\"non_journalled\"")
 				.returns("id=1\n" +
 						"id=2\n");
 	}
