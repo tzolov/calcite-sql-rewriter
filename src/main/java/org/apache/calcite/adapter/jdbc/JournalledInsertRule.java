@@ -16,7 +16,6 @@ import org.apache.calcite.rel.logical.LogicalTableModify;
 public class JournalledInsertRule implements BasicForcedRule {
 	@Override
 	public RelNode apply(RelNode originalRel, JdbcRelBuilderFactory relBuilderFactory) {
-
 		if (!(originalRel instanceof LogicalTableModify)) {
 			return null;
 		}
@@ -31,14 +30,9 @@ public class JournalledInsertRule implements BasicForcedRule {
 			return null;
 		}
 
-		return LogicalTableModify.create(
-				tableModify.getTable(),
-				tableModify.getCatalogReader(),
-				((LogicalProject) tableModify.getInput()).getInput(),
-				Operation.INSERT,
-				null, //List < String > updateColumnList,
-				null, //List < RexNode > sourceExpressionList,
-				tableModify.isFlattened()
-		);
+		// Bypass the projection
+		tableModify.replaceInput(0, tableModify.getInput(0).getInput(0));
+
+		return tableModify;
 	}
 }
