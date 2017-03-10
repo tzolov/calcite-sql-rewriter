@@ -10,7 +10,7 @@ import org.apache.calcite.schema.Table;
 import org.apache.calcite.sql.SqlIdentifier;
 
 import java.lang.reflect.Field;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 @SuppressWarnings("WeakerAccess") // Public API
@@ -43,7 +43,7 @@ public class JdbcTableUtils {
 		return identifier.names.get(identifier.names.size() - 1);
 	}
 
-	static RelNode toRel(RelOptCluster cluster, RelOptSchema relOptSchema, JdbcTable table) {
+	static RelNode toRel(RelOptCluster cluster, RelOptSchema relOptSchema, RelOptTable sibling, JdbcTable table) {
 		RelOptTable.ToRelContext toRelContext = new RelOptTable.ToRelContext() {
 			@Override
 			public RelOptCluster getCluster() {
@@ -56,16 +56,22 @@ public class JdbcTableUtils {
 			}
 		};
 
+		List<String> name = new ArrayList<>();
+		if(sibling != null) {
+			name.addAll(sibling.getQualifiedName());
+			name.remove(name.size() - 1);
+		}
+		name.add(getTableName(table));
 		return table.toRel(
 				toRelContext,
-				relOptSchema.getTableForMember(Collections.singletonList(getTableName(table)))
+				relOptSchema.getTableForMember(name)
 		);
 	}
 
-	public static RelNode toRel(RelOptCluster cluster, RelOptSchema relOptSchema, Table table) {
+	public static RelNode toRel(RelOptCluster cluster, RelOptSchema relOptSchema, RelOptTable sibling, Table table) {
 		if(!(table instanceof JdbcTable)) {
 			throw new UnsupportedOperationException();
 		}
-		return toRel(cluster, relOptSchema, (JdbcTable) table);
+		return toRel(cluster, relOptSchema, sibling, (JdbcTable) table);
 	}
 }

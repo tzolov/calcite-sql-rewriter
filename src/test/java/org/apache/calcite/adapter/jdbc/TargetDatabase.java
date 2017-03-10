@@ -16,7 +16,7 @@ class TargetDatabase {
 
 	static final String JOURNALLED_MODEL = "{\n"
 			+ "  \"version\": \"1.0\",\n"
-			+ "  \"defaultSchema\": \"hr\",\n"
+			+ "  \"defaultSchema\": \"dontrelyonme\",\n"
 			+ "   schemas: [\n"
 			+ "     {\n"
 			+ "       \"name\": \"hr\",\n"

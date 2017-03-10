@@ -85,7 +85,7 @@ public class JournalledSelectRuleTest {
 
 		rule.apply(inTableScan, relBuilderFactory);
 
-		Mockito.verify(relBuilder).scanJdbc(Mockito.same(journalTable));
+		Mockito.verify(relBuilder).scanJdbc(Mockito.same(relOptTable), Mockito.same(journalTable));
 		Mockito.verify(relBuilder).projectToMatch(Mockito.same(originalRowType));
 	}
 }

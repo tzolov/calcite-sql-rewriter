@@ -14,12 +14,12 @@ import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 
 public class JournalledSelectRule implements BasicForcedRule {
 	@Override
-	public RelNode apply(RelNode originalScan, JdbcRelBuilderFactory relBuilderFactory) {
-		if (!(originalScan instanceof JdbcTableScan)) {
+	public RelNode apply(RelNode originalRel, JdbcRelBuilderFactory relBuilderFactory) {
+		if (!(originalRel instanceof JdbcTableScan)) {
 			return null;
 		}
 
-		JdbcTable table = ((JdbcTableScan) originalScan).jdbcTable;
+		JdbcTable table = ((JdbcTableScan) originalRel).jdbcTable;
 		if (!(table instanceof JournalledJdbcTable)) {
 			// Not a journalled table; nothing to do
 			return null;
@@ -27,12 +27,12 @@ public class JournalledSelectRule implements BasicForcedRule {
 		JournalledJdbcTable journalledTable = (JournalledJdbcTable) table;
 
 		JdbcRelBuilder relBuilder = relBuilderFactory.create(
-				originalScan.getCluster(),
-				originalScan.getTable().getRelOptSchema()
+				originalRel.getCluster(),
+				originalRel.getTable().getRelOptSchema()
 		);
 
 		// FROM <table_journal>
-		relBuilder.scanJdbc(journalledTable.getJournalTable());
+		relBuilder.scanJdbc(originalRel.getTable(), journalledTable.getJournalTable());
 
 		RexInputRef versionField = relBuilder.field(journalledTable.getVersionField());
 		RexInputRef subsequentVersionField = relBuilder.field(journalledTable.getSubsequentVersionField());
@@ -51,7 +51,7 @@ public class JournalledSelectRule implements BasicForcedRule {
 		);
 
 		// SELECT <originally_requested_columns>
-		relBuilder.projectToMatch(originalScan.getRowType());
+		relBuilder.projectToMatch(originalRel.getRowType());
 
 		return relBuilder.build();
 	}

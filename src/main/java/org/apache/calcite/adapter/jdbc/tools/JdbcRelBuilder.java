@@ -5,6 +5,7 @@ import org.apache.calcite.adapter.jdbc.JdbcTableUtils;
 import org.apache.calcite.plan.Context;
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelOptSchema;
+import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rex.RexFieldCollation;
 import org.apache.calcite.rex.RexInputRef;
@@ -92,8 +93,8 @@ public class JdbcRelBuilder extends RelBuilder {
 	}
 
 	// Table MUST be a JdbcTable (cannot be typesafe since JdbcTable is package-private)
-	public JdbcRelBuilder scanJdbc(Table table) {
-		push(JdbcTableUtils.toRel(cluster, relOptSchema, table));
+	public JdbcRelBuilder scanJdbc(RelOptTable sibling, Table table) {
+		push(JdbcTableUtils.toRel(cluster, relOptSchema, sibling, table));
 		return this;
 	}
 
