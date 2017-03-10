@@ -21,7 +21,6 @@ public class JournalledSelectRuleTest {
 	private JdbcRelBuilderFactory relBuilderFactory;
 	private JdbcRelBuilder relBuilder;
 	private JournalledSelectRule rule;
-	private JournalledJdbcTable table;
 	private JdbcTable journalTable;
 	private JdbcTableScan inTableScan;
 	private RelOptTable relOptTable;
@@ -29,15 +28,16 @@ public class JournalledSelectRuleTest {
 	private RelDataType originalRowType;
 
 	@Before
+	@SuppressWarnings("ResultOfMethodCallIgnored") // Mockito syntax
 	public void setupMocks() {
 		relBuilderFactory = Mockito.mock(JdbcRelBuilderFactory.class);
 		relBuilder = Mockito.mock(JdbcRelBuilder.class);
-		table = Mockito.mock(JournalledJdbcTable.class);
 		journalTable = Mockito.mock(JdbcTable.class);
 		rule = new JournalledSelectRule();
 		relOptTable = Mockito.mock(RelOptTable.class);
 		relOptCluster = Mockito.mock(RelOptCluster.class);
 		originalRowType = Mockito.mock(RelDataType.class);
+		JournalledJdbcTable table = Mockito.mock(JournalledJdbcTable.class);
 		RelOptSchema relOptSchema = Mockito.mock(RelOptSchema.class);
 		RexInputRef versionField = Mockito.mock(RexInputRef.class);
 		RexInputRef subsequentVersionField = Mockito.mock(RexInputRef.class);

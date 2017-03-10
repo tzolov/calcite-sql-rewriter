@@ -5,7 +5,6 @@ import org.apache.calcite.adapter.jdbc.JdbcTableUtils;
 import org.apache.calcite.plan.Context;
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelOptSchema;
-import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rex.RexFieldCollation;
 import org.apache.calcite.rex.RexInputRef;
@@ -28,12 +27,12 @@ public class JdbcRelBuilder extends RelBuilder {
 
 	public RexNode makeOver(
 			SqlAggFunction operator,
-			List<RexNode> exprs,
+			List<RexNode> expressions,
 			List<RexNode> partitionKeys
 	) {
 		return makeOver(
 				operator,
-				exprs,
+				expressions,
 				partitionKeys,
 				ImmutableList.of(),
 				RexWindowBound.create(SqlWindow.createUnboundedPreceding(SqlParserPos.ZERO), null),
@@ -46,7 +45,7 @@ public class JdbcRelBuilder extends RelBuilder {
 
 	public RexNode makeOver(
 			SqlAggFunction operator,
-			List<RexNode> exprs,
+			List<RexNode> expressions,
 			List<RexNode> partitionKeys,
 			ImmutableList<RexFieldCollation> orderKeys, // Calcite API is weird
 			RexWindowBound lowerBound,
@@ -55,14 +54,14 @@ public class JdbcRelBuilder extends RelBuilder {
 			boolean allowPartial,
 			boolean nullWhenCountZero
 	) {
-		List<RelDataType> types = new ArrayList<>(exprs.size());
-		for (RexNode n : exprs) {
+		List<RelDataType> types = new ArrayList<>(expressions.size());
+		for (RexNode n : expressions) {
 			types.add(n.getType());
 		}
 		return getRexBuilder().makeOver(
 				operator.inferReturnType(getTypeFactory(), types),
 				operator,
-				exprs,
+				expressions,
 				partitionKeys,
 				orderKeys,
 				lowerBound,
@@ -92,7 +91,7 @@ public class JdbcRelBuilder extends RelBuilder {
 		return field(fields.size() - 1);
 	}
 
-	// Table MUST be a JdbcTable (cannot be typesafe since JdbcTable is package-private)
+	// Table MUST be a JdbcTable (cannot be type-safe since JdbcTable is package-private)
 	public JdbcRelBuilder scanJdbc(Table table, List<String> qualifiedName) {
 		push(JdbcTableUtils.toRel(cluster, relOptSchema, table, qualifiedName));
 		return this;
