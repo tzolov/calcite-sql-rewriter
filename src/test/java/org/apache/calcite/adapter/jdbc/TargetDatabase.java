@@ -21,7 +21,7 @@ class TargetDatabase {
 			+ "     {\n"
 			+ "       \"name\": \"hr\",\n"
 			+ "       \"type\": \"custom\",\n"
-			+ "       \"factory\": \"io.pivotal.beach.calcite.schemas.JournalledJdbcSchemaFactory\",\n"
+			+ "       \"factory\": \"org.apache.calcite.adapter.jdbc.JournalledJdbcSchema$Factory\",\n"
 			+ "       \"operand\": {\n"
 			+ "         \"jdbcDriver\": \"org.postgresql.Driver\",\n"
 			+ "         \"jdbcUser\": \"" + DB_USER + "\",\n"

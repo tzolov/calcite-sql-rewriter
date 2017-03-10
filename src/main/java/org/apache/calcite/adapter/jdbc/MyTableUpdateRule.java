@@ -80,7 +80,7 @@ public class MyTableUpdateRule extends RelOptRule {
 //		Schema schema = JdbcTableUtils.getSchema(table);
 //		JournalledTableConfiguration tableConfig = JournalledTableConfiguration.get(
 //				schema,
-//				JdbcTableUtils.getName(table)
+//				JdbcTableUtils.getTableName(table)
 //		);
 //		if (tableConfig == null) {
 //			// Not a journalled table; nothing to do

@@ -1,6 +1,5 @@
 package org.apache.calcite.adapter.jdbc;
 
-import io.pivotal.beach.calcite.configuration.JournalledTableConfiguration;
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.RelNode;
@@ -13,17 +12,29 @@ import java.lang.reflect.Field;
 import java.util.List;
 
 class JdbcTableUtils {
-	static Schema getSchema(JdbcTable table) {
+	private static Object get(JdbcTable table, String fieldName) {
 		try {
-			Field schemaF = JdbcTable.class.getDeclaredField("jdbcSchema");
-			schemaF.setAccessible(true);
-			return (Schema) schemaF.get(table);
+			Field field = JdbcTable.class.getDeclaredField(fieldName);
+			field.setAccessible(true);
+			return field.get(table);
 		} catch (NoSuchFieldException | IllegalAccessException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	static String getName(JdbcTable table) {
+	static Schema getSchema(JdbcTable table) {
+		return (Schema) get(table, "jdbcSchema");
+	}
+
+	static String getCatalogName(JdbcTable table) {
+		return (String) get(table, "jdbcCatalogName");
+	}
+
+	static String getSchemaName(JdbcTable table) {
+		return (String) get(table, "jdbcSchemaName");
+	}
+
+	static String getTableName(JdbcTable table) {
 		// tableName is: [catalog,] [schema,] table
 		SqlIdentifier identifier = table.tableName();
 		return identifier.names.get(identifier.names.size() - 1);
@@ -42,13 +53,6 @@ class JdbcTableUtils {
 			}
 		};
 		return table.toRel(toRelContext, relOptTable);
-	}
-
-	static JournalledTableConfiguration configurationForTable(JdbcTable jdbcTable) {
-		return JournalledTableConfiguration.get(
-				JdbcTableUtils.getSchema(jdbcTable),
-				JdbcTableUtils.getName(jdbcTable)
-		);
 	}
 
 	private JdbcTableUtils() {
