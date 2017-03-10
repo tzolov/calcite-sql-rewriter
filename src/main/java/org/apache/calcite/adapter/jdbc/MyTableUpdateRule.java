@@ -2,6 +2,7 @@ package org.apache.calcite.adapter.jdbc;
 
 import com.google.common.collect.ImmutableList;
 import org.apache.calcite.adapter.jdbc.JdbcRules.JdbcFilter;
+import org.apache.calcite.adapter.jdbc.JdbcRules.JdbcProject;
 import org.apache.calcite.adapter.jdbc.JdbcRules.JdbcTableModify;
 import org.apache.calcite.plan.*;
 import org.apache.calcite.plan.volcano.RelSubset;
@@ -108,7 +109,9 @@ public class MyTableUpdateRule extends RelOptRule {
 				.addAll(input.getRowType().getFieldList())
 				.add("last_version_number", maxOverRexNode.getType()).build();
 
-		relBuilder.push(new LogicalProject(cluster, traitSet, input, newProjections, newProjectDataType));
+		JdbcProject newJdbcProject = new JdbcProject(cluster, traitSet, input, newProjections, newProjectDataType);
+
+		relBuilder.push(newJdbcProject);
 
 		// 3. FILTER (exp_date = last_version_number)
 		RexNode condition = relBuilder.call(SqlStdOperatorTable.EQUALS,
@@ -119,7 +122,8 @@ public class MyTableUpdateRule extends RelOptRule {
 		relBuilder.push(jdbcFilter);
 
 		// 4. TOP PROJECT (same as the Scan Row Type - filters out the last_version_number column)
-		relBuilder.push(new LogicalProject(cluster, traitSet, jdbcFilter, fields, input.getRowType()));
+		JdbcProject topJdbcProject = new JdbcProject(cluster, traitSet, jdbcFilter, fields, input.getRowType());
+		relBuilder.push(topJdbcProject);
 
 		// 5. Insert
 		JdbcTableModify insert = new JdbcTableModify(update.getCluster(),
@@ -139,17 +143,5 @@ public class MyTableUpdateRule extends RelOptRule {
 		System.out.println("Expanded RelNode: \n" + RelOptUtil.toString(relNode));
 
 		call.transformTo(relNode);
-	}
-
-	private class MyJdbcInsert extends JdbcTableModify {
-
-		public MyJdbcInsert(RelOptCluster cluster, RelTraitSet traitSet, RelOptTable table, CatalogReader catalogReader, RelNode input, Operation operation, List<String> updateColumnList, List<RexNode> sourceExpressionList, boolean flattened) {
-			super(cluster, traitSet, table, catalogReader, input, operation, updateColumnList, sourceExpressionList, flattened);
-		}
-
-		@Override
-		public RelOptCost computeSelfCost(RelOptPlanner planner, RelMetadataQuery mq) {
-			return super.computeSelfCost(planner, mq).multiplyBy(.001);
-		}
 	}
 }
