@@ -1,6 +1,7 @@
 package org.apache.calcite.adapter.jdbc;
 
 import org.apache.commons.io.IOUtils;
+import org.junit.Assert;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -73,6 +74,9 @@ class TargetDatabase {
 		IOUtils.copy(scriptStream, outputStream);
 		outputStream.close();
 		scriptStream.close();
-		cmd.waitFor();
+		int exitCode = cmd.waitFor();
+		if(exitCode != 0) {
+			throw new IllegalStateException("Failed to build test database. Exit code: " + exitCode);
+		}
 	}
 }

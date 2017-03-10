@@ -59,7 +59,7 @@ public class InsertIntegrationTest {
 	public void testRewritingWithMetaColumnsInTheMiddle() {
 		CalciteAssert
 				.model(TargetDatabase.JOURNALLED_MODEL)
-				.query("INSERT INTO \"" + virtualSchemaName + "\".\"emps\" (\"empid\", \"deptno\", \"first_name\", \"last_name\") VALUES(99, 3, 'Zig', 'Zag')")
+				.query("INSERT INTO \"" + virtualSchemaName + "\".\"emps\" (\"empid\", \"deptno\", \"first_name\", \"last_name\") VALUES (99, 3, 'Zig', 'Zag')")
 				.explainContains("PLAN=JdbcToEnumerableConverter\n" +
 						"  JdbcTableModify(table=[[" + virtualSchemaName + ", emps_journal]], operation=[INSERT], flattened=[false])\n" +
 						"    JdbcValues(tuples=[[{ 99, 3, 'Zig', 'Zag' }]])\n")
@@ -71,7 +71,7 @@ public class InsertIntegrationTest {
 	public void testRewritingWithoutAllColumns() {
 		CalciteAssert
 				.model(TargetDatabase.JOURNALLED_MODEL)
-				.query("INSERT INTO \"" + virtualSchemaName + "\".\"emps\" (\"empid\", \"deptno\", \"last_name\") VALUES(10, 3, 'OnlyMe')")
+				.query("INSERT INTO \"" + virtualSchemaName + "\".\"emps\" (\"empid\", \"deptno\", \"last_name\") VALUES (10, 3, 'OnlyMe')")
 				.withHook(Hook.PROGRAM, program)
 				.explainContains("PLAN=JdbcToEnumerableConverter\n" +
 						"  JdbcTableModify(table=[[" + virtualSchemaName + ", emps_journal]], operation=[INSERT], flattened=[false])\n" +
@@ -81,10 +81,29 @@ public class InsertIntegrationTest {
 	}
 
 	@Test
+	public void testInsertSelect() {
+		CalciteAssert
+				.model(TargetDatabase.JOURNALLED_MODEL)
+				.query("INSERT INTO \"" + virtualSchemaName + "\".\"emps\" (\"empid\", \"deptno\") SELECT \"deptno\" + 1000, \"deptno\" FROM \"" + virtualSchemaName + "\".\"depts\"")
+				.withHook(Hook.PROGRAM, program)
+				.explainContains("PLAN=JdbcToEnumerableConverter\n" +
+						"  JdbcTableModify(table=[[calcite_sql_rewriter_integration_test, emps_journal]], operation=[INSERT], flattened=[false])\n" +
+						"    JdbcProject(EXPR$0=[+($0, 1000)], deptno=[$0])\n" +
+						"      JdbcFilter(condition=[AND(=($1, $3), IS NULL($2))])\n" +
+						"        JdbcProject(deptno=[$0], version_number=[$2], subsequent_version_number=[$3], $f4=[MAX($2) OVER (PARTITION BY $0 ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)])\n" +
+						"          JdbcTableScan(table=[[calcite_sql_rewriter_integration_test, depts_journal]])\n")
+				.planUpdateHasSql("INSERT INTO \"calcite_sql_rewriter_integration_test\".\"emps_journal\" (\"empid\", \"deptno\")\n" +
+						"(SELECT \"deptno\" + 1000, \"deptno\"\n" +
+						"FROM (SELECT \"deptno\", \"version_number\", \"subsequent_version_number\", MAX(\"version_number\") OVER (PARTITION BY \"deptno\" ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS \"$f4\"\n" +
+						"FROM \"calcite_sql_rewriter_integration_test\".\"depts_journal\") AS \"t\"\n" +
+						"WHERE \"version_number\" = \"$f4\" AND \"subsequent_version_number\" IS NULL)", 4);
+	}
+
+	@Test
 	public void testNonJournalled() {
 		CalciteAssert
 				.model(TargetDatabase.JOURNALLED_MODEL)
-				.query("INSERT INTO \"" + virtualSchemaName + "\".\"non_journalled\" (\"id\") VALUES(7)")
+				.query("INSERT INTO \"" + virtualSchemaName + "\".\"non_journalled\" (\"id\") VALUES (7)")
 				.explainContains("PLAN=JdbcToEnumerableConverter\n" +
 						"  JdbcTableModify(table=[[" + virtualSchemaName + ", non_journalled]], operation=[INSERT], flattened=[false])\n" +
 						"    JdbcValues(tuples=[[{ 7 }]])\n")
