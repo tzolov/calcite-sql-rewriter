@@ -39,7 +39,7 @@ class TargetDatabase {
 			+ "         }\n"
 			+ "       }\n"
 			+ "     },\n"
-			+ "     {\n" // This exists to work around a bug in Calcite. Once the bug is fixed, the tests using this schema should switch to use hr instead.
+			+ "     {\n" // This exists to work around a bug in Calcite [https://issues.apache.org/jira/browse/CALCITE-1692]. Once the bug is fixed, the tests using this schema should switch to use hr instead.
 			+ "       \"name\": \"calcite_sql_rewriter_integration_test\",\n"
 			+ "       \"type\": \"custom\",\n"
 			+ "       \"factory\": \"org.apache.calcite.adapter.jdbc.JournalledJdbcSchema$Factory\",\n"
