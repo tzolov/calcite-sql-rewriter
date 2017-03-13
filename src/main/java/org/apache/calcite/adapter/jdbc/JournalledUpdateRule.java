@@ -3,7 +3,6 @@ package org.apache.calcite.adapter.jdbc;
 import io.pivotal.beach.calcite.programs.BasicForcedRule;
 import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilderFactory;
 import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.core.TableModify;
 import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.logical.LogicalTableModify;
 
@@ -16,7 +15,7 @@ public class JournalledUpdateRule implements BasicForcedRule {
 
 		LogicalTableModify tableModify = (LogicalTableModify) originalRel;
 
-		if (!tableModify.getOperation().equals(TableModify.Operation.UPDATE)) {
+		if (!tableModify.isUpdate()) {
 			return null;
 		}
 

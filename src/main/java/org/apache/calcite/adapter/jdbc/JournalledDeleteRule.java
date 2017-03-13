@@ -21,7 +21,7 @@ public class JournalledDeleteRule implements BasicForcedRule {
 
 		LogicalTableModify tableModify = (LogicalTableModify) originalRel;
 
-		if (!tableModify.getOperation().equals(TableModify.Operation.DELETE)) {
+		if (!tableModify.isDelete()) {
 			return null;
 		}
 
