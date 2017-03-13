@@ -1,6 +1,5 @@
 package org.apache.calcite.adapter.jdbc;
 
-import com.google.common.collect.ImmutableList;
 import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilder;
 import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilderFactory;
 import org.apache.calcite.plan.RelOptCluster;
@@ -14,6 +13,8 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+
+import com.google.common.collect.ImmutableList;
 
 public class JournalledJdbcTableTest {
 	private RelOptTable.ToRelContext context;

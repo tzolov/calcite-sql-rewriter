@@ -1,15 +1,19 @@
 package io.pivotal.beach.calcite.programs;
 
+import java.util.List;
+
 import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilderFactory;
 import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilderFactoryFactory;
-import org.apache.calcite.plan.*;
+import org.apache.calcite.plan.RelOptLattice;
+import org.apache.calcite.plan.RelOptMaterialization;
+import org.apache.calcite.plan.RelOptPlanner;
+import org.apache.calcite.plan.RelOptUtil;
+import org.apache.calcite.plan.RelTraitSet;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.tools.Program;
 import org.apache.calcite.util.Litmus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.List;
 
 public class ForcedRulesProgram implements Program {
 	private static final Logger logger = LoggerFactory.getLogger(ForcedRulesProgram.class);

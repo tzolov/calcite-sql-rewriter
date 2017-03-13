@@ -1,10 +1,9 @@
 package org.apache.calcite.adapter.jdbc;
 
-import org.apache.commons.io.IOUtils;
-import org.junit.Assert;
-
 import java.io.InputStream;
 import java.io.OutputStream;
+
+import org.apache.commons.io.IOUtils;
 
 class TargetDatabase {
 	// Not the nicest citizen in the world; commandeer any standard postgres database we find on the machine.

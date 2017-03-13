@@ -1,8 +1,12 @@
 package io.pivotal.beach.calcite.programs;
 
-import com.google.common.base.Function;
-import com.google.common.collect.ImmutableList;
-import org.apache.calcite.plan.*;
+import java.util.List;
+
+import org.apache.calcite.plan.RelOptLattice;
+import org.apache.calcite.plan.RelOptMaterialization;
+import org.apache.calcite.plan.RelOptPlanner;
+import org.apache.calcite.plan.RelOptUtil;
+import org.apache.calcite.plan.RelTraitSet;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.tools.Program;
 import org.apache.calcite.tools.Programs;
@@ -10,7 +14,8 @@ import org.apache.calcite.util.Holder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableList;
 
 @SuppressWarnings("WeakerAccess") // Public API
 public class SequenceProgram implements Program {

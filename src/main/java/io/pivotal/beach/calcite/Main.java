@@ -1,7 +1,11 @@
 package io.pivotal.beach.calcite;
 
-import io.pivotal.beach.calcite.programs.ForcedRulesProgram;
-import io.pivotal.beach.calcite.programs.SequenceProgram;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.util.Properties;
+
 import org.apache.calcite.adapter.jdbc.JournalledDeleteRule;
 import org.apache.calcite.adapter.jdbc.JournalledInsertRule;
 import org.apache.calcite.adapter.jdbc.JournalledUpdateRule;
@@ -9,11 +13,8 @@ import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilder;
 import org.apache.calcite.jdbc.CalciteConnection;
 import org.apache.calcite.runtime.Hook;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.Statement;
-import java.util.Properties;
+import io.pivotal.beach.calcite.programs.ForcedRulesProgram;
+import io.pivotal.beach.calcite.programs.SequenceProgram;
 
 public class Main {
 	public static void main(String[] argv) throws Exception {

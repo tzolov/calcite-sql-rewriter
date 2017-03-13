@@ -1,8 +1,5 @@
 package org.apache.calcite.adapter.jdbc;
 
-import com.google.common.base.Function;
-import io.pivotal.beach.calcite.programs.ForcedRulesProgram;
-import io.pivotal.beach.calcite.programs.SequenceProgram;
 import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilder;
 import org.apache.calcite.runtime.Hook;
 import org.apache.calcite.test.CalciteAssert;
@@ -10,6 +7,10 @@ import org.apache.calcite.tools.Program;
 import org.apache.calcite.util.Holder;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import com.google.common.base.Function;
+import io.pivotal.beach.calcite.programs.ForcedRulesProgram;
+import io.pivotal.beach.calcite.programs.SequenceProgram;
 
 public class SelectIntegrationTest {
 	private static final String virtualSchemaName = "hr";

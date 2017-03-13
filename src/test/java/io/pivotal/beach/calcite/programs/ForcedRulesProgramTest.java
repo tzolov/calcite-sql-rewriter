@@ -1,6 +1,7 @@
 package io.pivotal.beach.calcite.programs;
 
-import com.google.common.collect.ImmutableList;
+import java.util.Collections;
+
 import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilderFactory;
 import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilderFactoryFactory;
 import org.apache.calcite.plan.Context;
@@ -13,7 +14,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import java.util.Collections;
+import com.google.common.collect.ImmutableList;
 
 public class ForcedRulesProgramTest {
 	private Context context;

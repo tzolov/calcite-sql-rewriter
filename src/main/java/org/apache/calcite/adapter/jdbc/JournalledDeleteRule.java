@@ -1,6 +1,8 @@
 package org.apache.calcite.adapter.jdbc;
 
-import io.pivotal.beach.calcite.programs.BasicForcedRule;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilder;
 import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilderFactory;
 import org.apache.calcite.rel.RelNode;
@@ -10,8 +12,7 @@ import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 
-import java.util.ArrayList;
-import java.util.List;
+import io.pivotal.beach.calcite.programs.BasicForcedRule;
 
 public class JournalledDeleteRule implements BasicForcedRule {
 	@Override

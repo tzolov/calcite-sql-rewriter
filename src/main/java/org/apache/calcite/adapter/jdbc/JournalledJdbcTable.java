@@ -1,18 +1,13 @@
 package org.apache.calcite.adapter.jdbc;
 
-import com.google.common.collect.ImmutableList;
 import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilder;
 import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilderFactory;
-import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelOptTable;
-import org.apache.calcite.prepare.Prepare;
 import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.core.TableModify;
 import org.apache.calcite.rex.RexInputRef;
-import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 
-import java.util.List;
+import com.google.common.collect.ImmutableList;
 
 class JournalledJdbcTable extends JdbcTable {
 	private final JdbcTable journalTable;

@@ -1,6 +1,8 @@
 package org.apache.calcite.adapter.jdbc;
 
-import io.pivotal.beach.calcite.programs.BasicForcedRule;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilder;
 import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilderFactory;
 import org.apache.calcite.rel.RelNode;
@@ -12,8 +14,7 @@ import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.util.Pair;
 
-import java.util.ArrayList;
-import java.util.List;
+import io.pivotal.beach.calcite.programs.BasicForcedRule;
 
 public class JournalledUpdateRule implements BasicForcedRule {
 	@Override

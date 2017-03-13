@@ -1,20 +1,31 @@
 package org.apache.calcite.adapter.jdbc;
 
-import com.google.common.collect.ImmutableMap;
-import org.apache.calcite.avatica.AvaticaUtils;
-import org.apache.calcite.linq4j.tree.Expression;
-import org.apache.calcite.rel.type.*;
-import org.apache.calcite.schema.*;
-import org.apache.calcite.sql.SqlDialect;
-import org.apache.calcite.sql.type.SqlTypeFactoryImpl;
-
-import javax.sql.DataSource;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+
+import javax.sql.DataSource;
+
+import org.apache.calcite.avatica.AvaticaUtils;
+import org.apache.calcite.linq4j.tree.Expression;
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.rel.type.RelDataTypeField;
+import org.apache.calcite.rel.type.RelDataTypeImpl;
+import org.apache.calcite.rel.type.RelDataTypeSystem;
+import org.apache.calcite.rel.type.RelProtoDataType;
+import org.apache.calcite.schema.Schema;
+import org.apache.calcite.schema.SchemaFactory;
+import org.apache.calcite.schema.SchemaPlus;
+import org.apache.calcite.schema.Schemas;
+import org.apache.calcite.schema.Table;
+import org.apache.calcite.sql.SqlDialect;
+import org.apache.calcite.sql.type.SqlTypeFactoryImpl;
+
+import com.google.common.collect.ImmutableMap;
 
 public class JournalledJdbcSchema extends JdbcSchema {
 	private final Map<String, String[]> journalledTableKeys;

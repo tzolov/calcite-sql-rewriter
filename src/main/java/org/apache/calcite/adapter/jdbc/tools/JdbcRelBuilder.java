@@ -1,6 +1,8 @@
 package org.apache.calcite.adapter.jdbc.tools;
 
-import com.google.common.collect.ImmutableList;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.calcite.adapter.jdbc.JdbcTableUtils;
 import org.apache.calcite.plan.Context;
 import org.apache.calcite.plan.RelOptCluster;
@@ -16,8 +18,7 @@ import org.apache.calcite.sql.SqlWindow;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.tools.RelBuilder;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.google.common.collect.ImmutableList;
 
 @SuppressWarnings({"WeakerAccess", "SameParameterValue"}) // Public API
 public class JdbcRelBuilder extends RelBuilder {
