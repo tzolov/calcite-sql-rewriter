@@ -98,7 +98,7 @@ public class JdbcRelBuilder extends RelBuilder {
 		push(new LogicalTableModify(
 				cluster,
 				original.getTraitSet(),
-				original.getTable().getRelOptSchema().getTableForMember(name),
+				relOptSchema.getTableForMember(name),
 				original.getCatalogReader(),
 				peek(),
 				TableModify.Operation.INSERT,
