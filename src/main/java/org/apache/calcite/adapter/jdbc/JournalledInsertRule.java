@@ -6,6 +6,7 @@ import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilderFactory;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.logical.LogicalTableModify;
+import org.apache.calcite.rel.logical.LogicalValues;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.util.Pair;
@@ -34,8 +35,12 @@ public class JournalledInsertRule implements BasicForcedRule {
 		// Add check that to ignore non-journal tables
 
 		RelNode input = tableModify.getInput();
-		if (!(input instanceof LogicalProject)) {
+		if (input instanceof LogicalValues) {
+			// TODO: do we need to do anything here?
 			return null;
+		}
+		if (!(input instanceof LogicalProject)) {
+			throw new IllegalStateException("Unknown Calcite INSERT structure");
 		}
 
 		LogicalProject project = (LogicalProject) input;
@@ -53,8 +58,10 @@ public class JournalledInsertRule implements BasicForcedRule {
 				tableModify.getTable().getRelOptSchema()
 		);
 
-		relBuilder.push(project.getInput());
-		RelNode newProjection = relBuilder.project(desiredFields, desiredNames).build();
+		RelNode newProjection = relBuilder
+				.push(project.getInput())
+				.project(desiredFields, desiredNames)
+				.build();
 		tableModify.replaceInput(0, newProjection);
 
 		return tableModify;

@@ -7,6 +7,7 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.TableModify;
 import org.apache.calcite.rel.logical.LogicalTableModify;
 import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.schema.Table;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 
 import java.util.ArrayList;
@@ -25,7 +26,17 @@ public class JournalledDeleteRule implements BasicForcedRule {
 			return null;
 		}
 
-		JdbcRelBuilder relBuilder = relBuilderFactory.create(originalRel.getCluster(), tableModify.getTable().getRelOptSchema());
+		Table baseTable = JdbcTableUtils.getJdbcTable(tableModify);
+		if(!(baseTable instanceof JournalledJdbcTable)) {
+			// Not a journal table; nothing to do
+			return null;
+		}
+		JournalledJdbcTable journalTable = (JournalledJdbcTable) baseTable;
+
+		JdbcRelBuilder relBuilder = relBuilderFactory.create(
+				originalRel.getCluster(),
+				tableModify.getTable().getRelOptSchema()
+		);
 		relBuilder.push(tableModify.getInput());
 
 		List<String> columnNames = new ArrayList<>();
@@ -35,22 +46,17 @@ public class JournalledDeleteRule implements BasicForcedRule {
 			columnNames.add(null);
 		}
 
-		// TODO: get these from the configuration
 		sources.add(relBuilder.call(SqlStdOperatorTable.CURRENT_TIMESTAMP));
-		columnNames.add("version_number");
 		sources.add(relBuilder.call(SqlStdOperatorTable.CURRENT_TIMESTAMP));
-		columnNames.add("subsequent_version_number");
+		columnNames.add(journalTable.getVersionField());
+		columnNames.add(journalTable.getSubsequentVersionField());
 
 		relBuilder.project(sources, columnNames);
-
-		List<String> journalName = new ArrayList<>();
-		journalName.addAll(tableModify.getTable().getQualifiedName());
-		journalName.set(journalName.size() - 1, journalName.get(journalName.size() - 1) + "_journal"); // TODO: get this from the configuration
 
 		relBuilder.push(new LogicalTableModify(
 				originalRel.getCluster(),
 				tableModify.getTraitSet(),
-				tableModify.getTable().getRelOptSchema().getTableForMember(journalName),
+				JdbcTableUtils.toRelOptTable(tableModify.getTable(), journalTable.getJournalTable()),
 				tableModify.getCatalogReader(),
 				relBuilder.peek(),
 				TableModify.Operation.INSERT,

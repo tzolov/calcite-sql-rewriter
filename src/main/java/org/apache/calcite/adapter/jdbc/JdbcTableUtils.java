@@ -59,6 +59,10 @@ public class JdbcTableUtils {
 		return name;
 	}
 
+	static RelOptTable toRelOptTable(RelOptTable sibling, JdbcTable table) {
+		return sibling.getRelOptSchema().getTableForMember(getQualifiedName(sibling, table));
+	}
+
 	static RelNode toRel(RelOptCluster cluster, RelOptSchema relOptSchema, JdbcTable table, List<String> qualifiedName) {
 		RelOptTable.ToRelContext toRelContext = new RelOptTable.ToRelContext() {
 			@Override

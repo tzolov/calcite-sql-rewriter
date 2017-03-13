@@ -1,11 +1,8 @@
 package org.apache.calcite.adapter.jdbc;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import io.pivotal.beach.calcite.programs.BasicForcedRule;
 import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilder;
 import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilderFactory;
-import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.TableModify;
 import org.apache.calcite.rel.core.TableModify.Operation;
@@ -15,7 +12,8 @@ import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.util.Pair;
 
-import io.pivotal.beach.calcite.programs.BasicForcedRule;
+import java.util.ArrayList;
+import java.util.List;
 
 public class JournalledUpdateRule implements BasicForcedRule {
 	@Override
@@ -30,19 +28,16 @@ public class JournalledUpdateRule implements BasicForcedRule {
 			return null;
 		}
 
-		if (!(tableModify.getInput() instanceof LogicalProject)) {
-			return null;
-		}
-
-		//Use Java reflexion (and implementation specific classes) to retrieve the JournalledJdbcTable.
 		JdbcTable jdbcTable = JdbcTableUtils.getJdbcTable(tableModify);
-
-		// Add check that to ignore non-journal tables
 		if (!(jdbcTable instanceof JournalledJdbcTable)) {
+			// Not a journal table; nothing to do
 			return null;
 		}
-
 		JournalledJdbcTable journalTable = (JournalledJdbcTable) jdbcTable;
+
+		if (!(tableModify.getInput() instanceof LogicalProject)) {
+			throw new IllegalStateException("Unknown Calcite UPDATE structure");
+		}
 
 		// Merge the Update's update column expression into the target INSERT
 		LogicalProject project = (LogicalProject) tableModify.getInput();
@@ -69,13 +64,10 @@ public class JournalledUpdateRule implements BasicForcedRule {
 		relBuilder.push(project.getInput());
 		relBuilder.project(desiredFields, desiredNames);
 
-		List<String> names = JdbcTableUtils.getQualifiedName(tableModify.getTable(), journalTable);
-		RelOptTable relOptJournalTable = tableModify.getTable().getRelOptSchema().getTableForMember(names);
-
 		// Convert the UPDATE into INSERT TableModify operations
 		TableModify newTableModify = journalTable.toModificationRel(
 				originalRel.getCluster(),
-				relOptJournalTable,
+				JdbcTableUtils.toRelOptTable(tableModify.getTable(), journalTable),
 				tableModify.getCatalogReader(),
 				relBuilder.peek(),
 				Operation.INSERT,

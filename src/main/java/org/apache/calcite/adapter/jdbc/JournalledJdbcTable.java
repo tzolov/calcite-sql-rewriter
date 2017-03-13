@@ -38,6 +38,18 @@ class JournalledJdbcTable extends JdbcTable {
 		this.keyColumnNames = ImmutableList.copyOf(keyColumnNames);
 	}
 
+	String getVersionField() {
+		return journalledJdbcSchema.getVersionField();
+	}
+
+	String getSubsequentVersionField() {
+		return journalledJdbcSchema.getSubsequentVersionField();
+	}
+
+	JdbcTable getJournalTable() {
+		return journalTable;
+	}
+
 	@Override
 	public RelNode toRel(RelOptTable.ToRelContext context, RelOptTable relOptTable) {
 		JdbcRelBuilder relBuilder = relBuilderFactory.create(
@@ -47,12 +59,12 @@ class JournalledJdbcTable extends JdbcTable {
 
 		// FROM <table_journal>
 		relBuilder.scanJdbc(
-				journalTable,
-				JdbcTableUtils.getQualifiedName(relOptTable, journalTable)
+				getJournalTable(),
+				JdbcTableUtils.getQualifiedName(relOptTable, getJournalTable())
 		);
 
-		RexInputRef versionField = relBuilder.field(journalledJdbcSchema.getVersionField());
-		RexInputRef subsequentVersionField = relBuilder.field(journalledJdbcSchema.getSubsequentVersionField());
+		RexInputRef versionField = relBuilder.field(getVersionField());
+		RexInputRef subsequentVersionField = relBuilder.field(getSubsequentVersionField());
 
 		// <maxVersionField> = MAX(<version_number>) OVER (PARTITION BY <primary_key>)
 		RexInputRef maxVersionField = relBuilder.appendField(relBuilder.makeOver(
@@ -80,9 +92,9 @@ class JournalledJdbcTable extends JdbcTable {
 			List<RexNode> sourceExpressionList,
 			boolean flattened
 	) {
-		List<String> names = JdbcTableUtils.getQualifiedName(table, journalTable);
+		List<String> names = JdbcTableUtils.getQualifiedName(table, getJournalTable());
 		RelOptTable relOptJournalTable = table.getRelOptSchema().getTableForMember(names);
-		return journalTable.toModificationRel(
+		return getJournalTable().toModificationRel(
 				cluster,
 				relOptJournalTable,
 				catalogReader,
