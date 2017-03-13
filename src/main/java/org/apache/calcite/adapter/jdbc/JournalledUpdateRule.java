@@ -1,13 +1,11 @@
 package org.apache.calcite.adapter.jdbc;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilder;
 import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilderFactory;
 import org.apache.calcite.plan.RelOptTable;
-import org.apache.calcite.prepare.RelOptTableImpl;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.TableModify;
 import org.apache.calcite.rel.core.TableModify.Operation;
@@ -36,14 +34,15 @@ public class JournalledUpdateRule implements BasicForcedRule {
 			return null;
 		}
 
-		//TODO
-		// Add check that to ignore non-journal tables
-
-		// TODO Explore for a better approach!
 		//Use Java reflexion (and implementation specific classes) to retrieve the JournalledJdbcTable.
-		JournalledJdbcTable journalTable =
-				(JournalledJdbcTable) JournalledUpdateRule.get((RelOptTableImpl) tableModify.getTable(), "table");
+		JdbcTable jdbcTable = JdbcTableUtils.getJdbcTable(tableModify);
 
+		// Add check that to ignore non-journal tables
+		if (!(jdbcTable instanceof JournalledJdbcTable)) {
+			return null;
+		}
+
+		JournalledJdbcTable journalTable = (JournalledJdbcTable) jdbcTable;
 
 		// Merge the Update's update column expression into the target INSERT
 		LogicalProject project = (LogicalProject) tableModify.getInput();
@@ -88,15 +87,5 @@ public class JournalledUpdateRule implements BasicForcedRule {
 		relBuilder.push(newTableModify);
 
 		return relBuilder.build();
-	}
-
-	private static Object get(RelOptTableImpl relOptTable, String fieldName) {
-		try {
-			Field field = RelOptTableImpl.class.getDeclaredField(fieldName);
-			field.setAccessible(true);
-			return field.get(relOptTable);
-		} catch (NoSuchFieldException | IllegalAccessException e) {
-			throw new RuntimeException(e);
-		}
 	}
 }

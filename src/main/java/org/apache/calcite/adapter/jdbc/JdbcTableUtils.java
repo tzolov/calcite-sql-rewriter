@@ -1,17 +1,18 @@
 package org.apache.calcite.adapter.jdbc;
 
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelOptSchema;
 import org.apache.calcite.plan.RelOptTable;
+import org.apache.calcite.prepare.RelOptTableImpl;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelRoot;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.sql.SqlIdentifier;
-
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
 
 @SuppressWarnings("WeakerAccess") // Public API
 public class JdbcTableUtils {
@@ -19,22 +20,27 @@ public class JdbcTableUtils {
 		throw new UnsupportedOperationException();
 	}
 
-	private static Object get(JdbcTable table, String fieldName) {
+	private static Object get(Class<?> clazz, Object object, String fieldName) {
 		try {
-			Field field = JdbcTable.class.getDeclaredField(fieldName);
+			Field field = clazz.getDeclaredField(fieldName);
 			field.setAccessible(true);
-			return field.get(table);
-		} catch (NoSuchFieldException | IllegalAccessException e) {
+			return field.get(object);
+		}
+		catch (NoSuchFieldException | IllegalAccessException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
+	static JdbcTable getJdbcTable(RelNode originalRel) {
+		return (JdbcTable) get(RelOptTableImpl.class, originalRel.getTable(), "table");
+	}
+
 	static String getCatalogName(JdbcTable table) {
-		return (String) get(table, "jdbcCatalogName");
+		return (String) get(JdbcTable.class, table, "jdbcCatalogName");
 	}
 
 	static String getSchemaName(JdbcTable table) {
-		return (String) get(table, "jdbcSchemaName");
+		return (String) get(JdbcTable.class, table, "jdbcSchemaName");
 	}
 
 	static String getTableName(JdbcTable table) {
@@ -45,7 +51,7 @@ public class JdbcTableUtils {
 
 	static List<String> getQualifiedName(RelOptTable sibling, JdbcTable table) {
 		List<String> name = new ArrayList<>();
-		if(sibling != null) {
+		if (sibling != null) {
 			name.addAll(sibling.getQualifiedName());
 			name.remove(name.size() - 1);
 		}
@@ -73,7 +79,7 @@ public class JdbcTableUtils {
 	}
 
 	public static RelNode toRel(RelOptCluster cluster, RelOptSchema relOptSchema, Table table, List<String> qualifiedName) {
-		if(!(table instanceof JdbcTable)) {
+		if (!(table instanceof JdbcTable)) {
 			throw new UnsupportedOperationException();
 		}
 		return toRel(cluster, relOptSchema, (JdbcTable) table, qualifiedName);
