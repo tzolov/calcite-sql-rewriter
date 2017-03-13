@@ -49,18 +49,18 @@ public class JdbcTableUtils {
 		return identifier.names.get(identifier.names.size() - 1);
 	}
 
-	static List<String> getQualifiedName(RelOptTable sibling, JdbcTable table) {
+	public static List<String> getQualifiedName(RelOptTable sibling, Table table) {
+		if (!(table instanceof JdbcTable)) {
+			throw new UnsupportedOperationException();
+		}
+
 		List<String> name = new ArrayList<>();
 		if (sibling != null) {
 			name.addAll(sibling.getQualifiedName());
 			name.remove(name.size() - 1);
 		}
-		name.add(getTableName(table));
+		name.add(getTableName((JdbcTable) table));
 		return name;
-	}
-
-	static RelOptTable toRelOptTable(RelOptTable sibling, JdbcTable table) {
-		return sibling.getRelOptSchema().getTableForMember(getQualifiedName(sibling, table));
 	}
 
 	static RelNode toRel(RelOptCluster cluster, RelOptSchema relOptSchema, JdbcTable table, List<String> qualifiedName) {

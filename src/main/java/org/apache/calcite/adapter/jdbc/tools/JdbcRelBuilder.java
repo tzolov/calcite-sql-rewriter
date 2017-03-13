@@ -7,6 +7,8 @@ import org.apache.calcite.adapter.jdbc.JdbcTableUtils;
 import org.apache.calcite.plan.Context;
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelOptSchema;
+import org.apache.calcite.rel.core.TableModify;
+import org.apache.calcite.rel.logical.LogicalTableModify;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rex.RexFieldCollation;
 import org.apache.calcite.rex.RexInputRef;
@@ -84,6 +86,26 @@ public class JdbcRelBuilder extends RelBuilder {
 	// Table MUST be a JdbcTable (cannot be type-safe since JdbcTable is package-private)
 	public JdbcRelBuilder scanJdbc(Table table, List<String> qualifiedName) {
 		push(JdbcTableUtils.toRel(cluster, relOptSchema, table, qualifiedName));
+		return this;
+	}
+
+	public JdbcRelBuilder insertCopying(
+			LogicalTableModify original,
+			Table table
+	) {
+		List<String> name = JdbcTableUtils.getQualifiedName(original.getTable(), table);
+
+		push(new LogicalTableModify(
+				cluster,
+				original.getTraitSet(),
+				original.getTable().getRelOptSchema().getTableForMember(name),
+				original.getCatalogReader(),
+				peek(),
+				TableModify.Operation.INSERT,
+				null,
+				null,
+				original.isFlattened()
+		));
 		return this;
 	}
 

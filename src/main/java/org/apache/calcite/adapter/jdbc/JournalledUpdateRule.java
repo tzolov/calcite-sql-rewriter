@@ -6,8 +6,6 @@ import java.util.List;
 import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilder;
 import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilderFactory;
 import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.core.TableModify;
-import org.apache.calcite.rel.core.TableModify.Operation;
 import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.logical.LogicalTableModify;
 import org.apache.calcite.rex.RexInputRef;
@@ -66,18 +64,10 @@ public class JournalledUpdateRule implements BasicForcedRule {
 		relBuilder.project(desiredFields, desiredNames);
 
 		// Convert the UPDATE into INSERT TableModify operations
-		TableModify newTableModify = journalTable.toModificationRel(
-				originalRel.getCluster(),
-				JdbcTableUtils.toRelOptTable(tableModify.getTable(), journalTable.getJournalTable()),
-				tableModify.getCatalogReader(),
-				relBuilder.peek(),
-				Operation.INSERT,
-				null,
-				null,
-				tableModify.isFlattened()
+		relBuilder.insertCopying(
+				tableModify,
+				journalTable.getJournalTable()
 		);
-
-		relBuilder.push(newTableModify);
 
 		return relBuilder.build();
 	}

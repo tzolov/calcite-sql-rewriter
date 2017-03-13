@@ -6,7 +6,6 @@ import java.util.List;
 import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilder;
 import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilderFactory;
 import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.core.TableModify;
 import org.apache.calcite.rel.logical.LogicalTableModify;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.schema.Table;
@@ -54,17 +53,10 @@ public class JournalledDeleteRule implements BasicForcedRule {
 
 		relBuilder.project(sources, columnNames);
 
-		relBuilder.push(new LogicalTableModify(
-				originalRel.getCluster(),
-				tableModify.getTraitSet(),
-				JdbcTableUtils.toRelOptTable(tableModify.getTable(), journalTable.getJournalTable()),
-				tableModify.getCatalogReader(),
-				relBuilder.peek(),
-				TableModify.Operation.INSERT,
-				null,
-				null,
-				tableModify.isFlattened()
-		));
+		relBuilder.insertCopying(
+				tableModify,
+				journalTable.getJournalTable()
+		);
 
 		return relBuilder.build();
 	}
