@@ -48,6 +48,7 @@ public class InsertIntegrationTest {
 		CalciteAssert
 				.model(TargetDatabase.JOURNALLED_MODEL)
 				.query("INSERT INTO \"" + virtualSchemaName + "\".\"depts\" (\"deptno\", \"department_name\") VALUES (696, 'Pivotal')")
+				.withHook(Hook.PROGRAM, program)
 				.explainContains("PLAN=JdbcToEnumerableConverter\n" +
 						"  JdbcTableModify(table=[[" + virtualSchemaName + ", depts_journal]], operation=[INSERT], flattened=[false])\n" +
 						"    JdbcValues(tuples=[[{ 696, 'Pivotal' }]])\n")
@@ -60,6 +61,7 @@ public class InsertIntegrationTest {
 		CalciteAssert
 				.model(TargetDatabase.JOURNALLED_MODEL)
 				.query("INSERT INTO \"" + virtualSchemaName + "\".\"emps\" (\"empid\", \"deptno\", \"first_name\", \"last_name\") VALUES (99, 3, 'Zig', 'Zag')")
+				.withHook(Hook.PROGRAM, program)
 				.explainContains("PLAN=JdbcToEnumerableConverter\n" +
 						"  JdbcTableModify(table=[[" + virtualSchemaName + ", emps_journal]], operation=[INSERT], flattened=[false])\n" +
 						"    JdbcValues(tuples=[[{ 99, 3, 'Zig', 'Zag' }]])\n")
@@ -104,6 +106,7 @@ public class InsertIntegrationTest {
 		CalciteAssert
 				.model(TargetDatabase.JOURNALLED_MODEL)
 				.query("INSERT INTO \"" + virtualSchemaName + "\".\"non_journalled\" (\"id\") VALUES (7)")
+				.withHook(Hook.PROGRAM, program)
 				.explainContains("PLAN=JdbcToEnumerableConverter\n" +
 						"  JdbcTableModify(table=[[" + virtualSchemaName + ", non_journalled]], operation=[INSERT], flattened=[false])\n" +
 						"    JdbcValues(tuples=[[{ 7 }]])\n")
