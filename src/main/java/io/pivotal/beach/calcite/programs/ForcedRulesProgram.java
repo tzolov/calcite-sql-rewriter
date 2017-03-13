@@ -50,6 +50,7 @@ public class ForcedRulesProgram implements Program {
 						Litmus.THROW
 				);
 				p = updated;
+				break;
 			}
 		}
 

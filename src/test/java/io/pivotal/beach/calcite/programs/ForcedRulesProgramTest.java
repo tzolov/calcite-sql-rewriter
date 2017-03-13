@@ -112,4 +112,18 @@ public class ForcedRulesProgramTest {
 		Assert.assertSame(inNode, result);
 		Mockito.verify(inNode).replaceInput(Mockito.eq(1), Mockito.same(outNode));
 	}
+
+	@Test
+	public void testRun_onlyAppliesOneRulePerNode() {
+		BasicForcedRule rule2 = Mockito.mock(BasicForcedRule.class);
+		RelNode outNode = Mockito.mock(RelNode.class);
+		Mockito.doReturn(outNode).when(rule).apply(Mockito.same(inNode), Mockito.any());
+
+		program = new ForcedRulesProgram(superFactory, rule, rule2);
+
+		program.run(planner, inNode, relTraitSet, Collections.emptyList(), Collections.emptyList());
+
+		Mockito.verify(rule).apply(Mockito.same(inNode), Mockito.any());
+		Mockito.verify(rule2, Mockito.never()).apply(Mockito.any(), Mockito.any());
+	}
 }
