@@ -81,28 +81,4 @@ class JournalledJdbcTable extends JdbcTable {
 
 		return relBuilder.build();
 	}
-
-	@Override public TableModify toModificationRel(
-			RelOptCluster cluster,
-			RelOptTable table,
-			Prepare.CatalogReader catalogReader,
-			RelNode input,
-			TableModify.Operation operation,
-			List<String> updateColumnList,
-			List<RexNode> sourceExpressionList,
-			boolean flattened
-	) {
-		List<String> names = JdbcTableUtils.getQualifiedName(table, getJournalTable());
-		RelOptTable relOptJournalTable = table.getRelOptSchema().getTableForMember(names);
-		return getJournalTable().toModificationRel(
-				cluster,
-				relOptJournalTable,
-				catalogReader,
-				input,
-				operation,
-				updateColumnList,
-				sourceExpressionList,
-				flattened
-		);
-	}
 }

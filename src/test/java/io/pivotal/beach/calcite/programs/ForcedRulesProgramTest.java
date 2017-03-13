@@ -89,13 +89,13 @@ public class ForcedRulesProgramTest {
 	}
 
 	@Test
-	public void testRun_doesNotScanWithinReplacements() {
+	public void testRun_scansWithinReplacements() {
 		RelNode outNode = Mockito.mock(RelNode.class);
 		Mockito.doReturn(outNode).when(rule).apply(Mockito.same(inNode), Mockito.any());
 
 		program.run(planner, inNode, relTraitSet, Collections.emptyList(), Collections.emptyList());
 
-		Mockito.verify(outNode, Mockito.never()).getInputs();
+		Mockito.verify(outNode).getInputs();
 	}
 
 	@Test

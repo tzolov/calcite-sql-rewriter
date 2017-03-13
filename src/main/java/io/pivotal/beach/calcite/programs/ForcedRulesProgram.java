@@ -54,14 +54,12 @@ public class ForcedRulesProgram implements Program {
 			}
 		}
 
-		if (p == original) { // optimisation: avoid changing nodes inside stuff we changed
-			List<RelNode> oldInputs = p.getInputs();
-			for (int i = 0; i < oldInputs.size(); i++) {
-				RelNode originalInput = oldInputs.get(i);
-				RelNode replacedInput = replace(originalInput, rules, relBuilderFactory);
-				if (replacedInput != originalInput) {
-					p.replaceInput(i, replacedInput);
-				}
+		List<RelNode> oldInputs = p.getInputs();
+		for (int i = 0; i < oldInputs.size(); i++) {
+			RelNode originalInput = oldInputs.get(i);
+			RelNode replacedInput = replace(originalInput, rules, relBuilderFactory);
+			if (replacedInput != originalInput) {
+				p.replaceInput(i, replacedInput);
 			}
 		}
 		return p;

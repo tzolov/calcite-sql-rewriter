@@ -67,7 +67,7 @@ public class JournalledUpdateRule implements BasicForcedRule {
 		// Convert the UPDATE into INSERT TableModify operations
 		TableModify newTableModify = journalTable.toModificationRel(
 				originalRel.getCluster(),
-				JdbcTableUtils.toRelOptTable(tableModify.getTable(), journalTable),
+				JdbcTableUtils.toRelOptTable(tableModify.getTable(), journalTable.getJournalTable()),
 				tableModify.getCatalogReader(),
 				relBuilder.peek(),
 				Operation.INSERT,
