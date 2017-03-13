@@ -63,7 +63,7 @@ INSERT INTO hr.depts_journal (deptno, department_name) VALUES (666, 'Pivotal');
 
 -- UPDATE
 -- UPDATE hr.depts SET department_name='First' WHERE deptno = 1;
-INSERT INTO hr.depts_journal (deptno, version_number, department_name)
+INSERT INTO hr.depts_journal (deptno, department_name)
   WITH link_last AS (
       SELECT
         *,
@@ -74,11 +74,7 @@ INSERT INTO hr.depts_journal (deptno, version_number, department_name)
   )
   SELECT
     deptno,
-    version_number + INTERVAL '1 hour',
-    'Name2'
+    'Name2' as department_name
   FROM link_last
   WHERE subsequent_version_number IS NULL
         AND version_number = last_version_number;
-
-SELECT *
-FROM hr.depts;

@@ -30,6 +30,9 @@ public class JournalledInsertRule implements BasicForcedRule {
 			return null;
 		}
 
+		//TODO
+		// Add check that to ignore non-journal tables
+
 		RelNode input = tableModify.getInput();
 		if (!(input instanceof LogicalProject)) {
 			return null;
