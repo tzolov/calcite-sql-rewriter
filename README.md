@@ -40,28 +40,28 @@ CREATE TABLE hr.depts_journal (
 );
 ```
  
-
-1. INSERT operations like this
-```
+1. Following `INSERT` statement issued against the Calcite JDBC driver
+```sql
 INSERT INTO hr.depts (deptno, department_name) VALUES(666, 'Pivotal');
 ```
-Is translated into:
+would be translated into SQL statement like this: 
 ```sql
 INSERT INTO hr.depts_journal (deptno, department_name) VALUES (666, 'Pivotal');
 ```
+_Note:_ that the table name is replaced by `<table-name>_journal`. The `hr.depts` may or may not exist. Data is 
+always goes to the `hr.depts_journal` table!  
 
-2. Update statements
+2. An `UPDATE` statements issued against the Calcite JDBC:
 ```sql
 UPDATE hr.depts SET department_name='New Name' WHERE deptno = 666;
 ```
-into
+would be expanded into `INSERT` statement like this: 
 ```sql
 INSERT INTO hr.depts_journal (deptno, department_name)
   WITH link_last AS (
       SELECT
         *,
-        MAX(version_number)
-        OVER (PARTITION BY deptno) AS last_version_number
+        MAX(version_number) OVER (PARTITION BY deptno) AS last_version_number
       FROM hr.depts_journal
       WHERE deptno = 666
   )
@@ -72,11 +72,11 @@ INSERT INTO hr.depts_journal (deptno, department_name)
   WHERE subsequent_version_number IS NULL
         AND version_number = last_version_number;
 ```
-
-3. Delete
+3. An `DELETE` statements issued against the Calcite JDBC:
 ```sql
 DELETE FROM hr.depts WHERE deptno=666;
 ```
+would be expanded into `INSERT` statement like this:
 ```sql
 INSERT INTO hr.depts_journal (deptno, department_name, version_number, subsequent_version_number)
   WITH link_last AS (
@@ -97,8 +97,32 @@ INSERT INTO hr.depts_journal (deptno, department_name, version_number, subsequen
         AND version_number = last_version_number;
 ```
 
-  
-Note that this is a temporal workaround until [HAWQ-304](https://issues.apache.org/jira/browse/HAWQ-304) implement a permanent solution! 
+4. `SELECT` query against the Calcite JDBC connection: 
+
+```sql
+SELECT * FROM hr.depts;
+```
+is converted this `SELECT` statement:
+```sql
+WITH link_last AS (
+    SELECT
+      *,
+      MAX(version_number)
+      OVER (PARTITION BY deptno) AS last_version_number
+    FROM hr.depts_journal
+)
+SELECT
+  deptno,
+  department_name
+FROM link_last
+WHERE subsequent_version_number IS NULL
+      AND version_number = last_version_number;
+```
+So for each `deptno` only the row with higher version_number is returned. 
+
+---
+
+_Note that this project provides just a temporal workaround. Complete solution will be provided with:_ [HAWQ-304](https://issues.apache.org/jira/browse/HAWQ-304) 
 
 ### References
 * [HAWQ-304](https://issues.apache.org/jira/browse/HAWQ-304) Support update and delete on non-heap tables
