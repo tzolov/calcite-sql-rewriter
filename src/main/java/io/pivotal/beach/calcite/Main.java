@@ -6,8 +6,6 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.Properties;
 
-import org.apache.calcite.jdbc.CalciteConnection;
-
 public class Main {
 	public static void main(String[] argv) throws Exception {
 		String modelPath = (argv.length > 0) ? argv[0] : "src/main/resources/myTestModel2.json";
@@ -17,9 +15,8 @@ public class Main {
 		info.setProperty("lex", "JAVA");
 		info.setProperty("model", modelPath);
 		Connection calConnection = DriverManager.getConnection("jdbc:calcite:", info);
-		CalciteConnection calciteConnection = calConnection.unwrap(CalciteConnection.class);
 
-		Statement statement = calciteConnection.createStatement();
+		Statement statement = calConnection.createStatement();
 //		String sql = "SELECT d.deptno\n"
 //				+ "FROM hr.emps AS e\n"
 //				+ "JOIN hr.depts AS d\n"
