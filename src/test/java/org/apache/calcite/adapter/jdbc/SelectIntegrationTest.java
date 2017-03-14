@@ -1,33 +1,18 @@
 package org.apache.calcite.adapter.jdbc;
 
-import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilder;
 import org.apache.calcite.runtime.Hook;
 import org.apache.calcite.test.CalciteAssert;
-import org.apache.calcite.tools.Program;
-import org.apache.calcite.util.Holder;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import com.google.common.base.Function;
-import io.pivotal.beach.calcite.programs.ForcedRulesProgram;
-import io.pivotal.beach.calcite.programs.SequenceProgram;
 
 public class SelectIntegrationTest {
 	private static final String virtualSchemaName = "hr";
 	private static final String actualSchemaName = "calcite_sql_rewriter_integration_test";
 
-	@SuppressWarnings("Guava") // Must conform to Calcite's API
-	private Function<Holder<Program>, Void> program = SequenceProgram.prepend(
-			new ForcedRulesProgram(new JdbcRelBuilder.FactoryFactory(),
-					new JournalledInsertRule(),
-					new JournalledUpdateRule(),
-					new JournalledDeleteRule()
-			)
-	);
-
 	@BeforeClass
 	public static void rebuildTestDatabase() throws Exception {
 		TargetDatabase.rebuild();
+		JournalledJdbcSchema.Factory.INSTANCE.setAutomaticallyAddRules(false);
 	}
 
 	@Test
@@ -35,7 +20,7 @@ public class SelectIntegrationTest {
 		CalciteAssert
 				.model(TargetDatabase.JOURNALLED_MODEL)
 				.query("SELECT \"empid\" FROM \"" + virtualSchemaName + "\".\"emps\"")
-				.withHook(Hook.PROGRAM, program)
+				.withHook(Hook.PROGRAM, JournalledJdbcRuleManager.program())
 				.explainContains("PLAN=JdbcToEnumerableConverter\n" +
 						"  JdbcProject(empid=[$0])\n" +
 						"    JdbcFilter(condition=[AND(=($1, $3), IS NULL($2))])\n" +
@@ -57,7 +42,7 @@ public class SelectIntegrationTest {
 		CalciteAssert
 				.model(TargetDatabase.JOURNALLED_MODEL)
 				.query("SELECT * FROM \"" + virtualSchemaName + "\".\"emps\"")
-				.withHook(Hook.PROGRAM, program)
+				.withHook(Hook.PROGRAM, JournalledJdbcRuleManager.program())
 				.returns("empid=1; deptno=2; first_name=Peter; last_name=Pan\n" +
 						"empid=2; deptno=1; first_name=Ian; last_name=Bibian\n" +
 						"empid=3; deptno=2; first_name=Victor; last_name=Strugatski\n" +
@@ -74,7 +59,7 @@ public class SelectIntegrationTest {
 						"JOIN \"" + virtualSchemaName + "\".\"depts\" AS \"d\" ON \"e\".\"deptno\" = \"d\".\"deptno\"\n" +
 						"GROUP BY \"d\".\"deptno\"\n" +
 						"HAVING COUNT(*) > 1")
-				.withHook(Hook.PROGRAM, program)
+				.withHook(Hook.PROGRAM, JournalledJdbcRuleManager.program())
 				.returns("deptno=2\n");
 	}
 
@@ -83,7 +68,7 @@ public class SelectIntegrationTest {
 		CalciteAssert
 				.model(TargetDatabase.JOURNALLED_MODEL)
 				.query("SELECT * FROM \"" + virtualSchemaName + "\".\"non_journalled\"")
-				.withHook(Hook.PROGRAM, program)
+				.withHook(Hook.PROGRAM, JournalledJdbcRuleManager.program())
 				.explainContains("JdbcToEnumerableConverter\n" +
 						"  JdbcTableScan(table=[[" + virtualSchemaName + ", non_journalled]])\n")
 				.planHasSql("SELECT *\n" +

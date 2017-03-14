@@ -34,6 +34,8 @@ public class JournalledDeleteRule extends AbstractForcedRule {
 			columnNames.add(null);
 		}
 
+		// TODO: would be nice if possible to let Version be set to default, and set SubsequentVersion to equal Version
+		// (would allow arbitrary version column types, not tied to timestamp)
 		sources.add(relBuilder.call(SqlStdOperatorTable.CURRENT_TIMESTAMP));
 		sources.add(relBuilder.call(SqlStdOperatorTable.CURRENT_TIMESTAMP));
 		columnNames.add(journalTable.getVersionField());

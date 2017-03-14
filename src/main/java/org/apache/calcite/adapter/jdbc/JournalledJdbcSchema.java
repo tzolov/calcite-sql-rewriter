@@ -204,10 +204,19 @@ public class JournalledJdbcSchema extends JdbcSchema {
 	public static class Factory implements SchemaFactory {
 		public static final Factory INSTANCE = new Factory();
 
+		private boolean automaticallyAddRules = true;
+
 		private Factory() {
 		}
 
+		public void setAutomaticallyAddRules(boolean enable) {
+			automaticallyAddRules = enable;
+		}
+
 		public Schema create(SchemaPlus parentSchema, String name, Map<String, Object> operand) {
+			if (automaticallyAddRules) {
+				JournalledJdbcRuleManager.addHook();
+			}
 			return JournalledJdbcSchema.create(parentSchema, name, operand);
 		}
 	}

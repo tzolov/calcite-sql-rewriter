@@ -1,33 +1,18 @@
 package org.apache.calcite.adapter.jdbc;
 
-import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilder;
 import org.apache.calcite.runtime.Hook;
 import org.apache.calcite.test.CalciteAssert;
-import org.apache.calcite.tools.Program;
-import org.apache.calcite.util.Holder;
 import org.junit.Before;
 import org.junit.Test;
-
-import com.google.common.base.Function;
-import io.pivotal.beach.calcite.programs.ForcedRulesProgram;
-import io.pivotal.beach.calcite.programs.SequenceProgram;
 
 public class InsertIntegrationTest {
 	private static final String virtualSchemaName = "calcite_sql_rewriter_integration_test"; // Should be "hr" - see TargetDatabase.java
 	private static final String actualSchemaName = "calcite_sql_rewriter_integration_test";
 
-	@SuppressWarnings("Guava") // Must conform to Calcite's API
-	private Function<Holder<Program>, Void> program = SequenceProgram.prepend(
-			new ForcedRulesProgram(new JdbcRelBuilder.FactoryFactory(),
-					new JournalledInsertRule(),
-					new JournalledUpdateRule(),
-					new JournalledDeleteRule()
-			)
-	);
-
 	@Before // TODO: find out how to make CalciteAssert run in a transaction then change this to BeforeClass
 	public void rebuildTestDatabase() throws Exception {
 		TargetDatabase.rebuild();
+		JournalledJdbcSchema.Factory.INSTANCE.setAutomaticallyAddRules(false);
 	}
 
 	@Test
@@ -35,7 +20,7 @@ public class InsertIntegrationTest {
 		CalciteAssert
 				.model(TargetDatabase.JOURNALLED_MODEL)
 				.query("INSERT INTO \"" + virtualSchemaName + "\".\"depts\" (\"deptno\") VALUES (696)")
-				.withHook(Hook.PROGRAM, program)
+				.withHook(Hook.PROGRAM, JournalledJdbcRuleManager.program())
 				.explainContains("PLAN=JdbcToEnumerableConverter\n" +
 						"  JdbcTableModify(table=[[" + virtualSchemaName + ", depts_journal]], operation=[INSERT], flattened=[false])\n" +
 						"    JdbcValues(tuples=[[{ 696 }]])\n")
@@ -48,7 +33,7 @@ public class InsertIntegrationTest {
 		CalciteAssert
 				.model(TargetDatabase.JOURNALLED_MODEL)
 				.query("INSERT INTO \"" + virtualSchemaName + "\".\"depts\" (\"deptno\", \"department_name\") VALUES (696, 'Pivotal')")
-				.withHook(Hook.PROGRAM, program)
+				.withHook(Hook.PROGRAM, JournalledJdbcRuleManager.program())
 				.explainContains("PLAN=JdbcToEnumerableConverter\n" +
 						"  JdbcTableModify(table=[[" + virtualSchemaName + ", depts_journal]], operation=[INSERT], flattened=[false])\n" +
 						"    JdbcValues(tuples=[[{ 696, 'Pivotal' }]])\n")
@@ -61,7 +46,7 @@ public class InsertIntegrationTest {
 		CalciteAssert
 				.model(TargetDatabase.JOURNALLED_MODEL)
 				.query("INSERT INTO \"" + virtualSchemaName + "\".\"emps\" (\"empid\", \"deptno\", \"first_name\", \"last_name\") VALUES (99, 3, 'Zig', 'Zag')")
-				.withHook(Hook.PROGRAM, program)
+				.withHook(Hook.PROGRAM, JournalledJdbcRuleManager.program())
 				.explainContains("PLAN=JdbcToEnumerableConverter\n" +
 						"  JdbcTableModify(table=[[" + virtualSchemaName + ", emps_journal]], operation=[INSERT], flattened=[false])\n" +
 						"    JdbcValues(tuples=[[{ 99, 3, 'Zig', 'Zag' }]])\n")
@@ -74,7 +59,7 @@ public class InsertIntegrationTest {
 		CalciteAssert
 				.model(TargetDatabase.JOURNALLED_MODEL)
 				.query("INSERT INTO \"" + virtualSchemaName + "\".\"emps\" (\"empid\", \"deptno\", \"last_name\") VALUES (10, 3, 'OnlyMe')")
-				.withHook(Hook.PROGRAM, program)
+				.withHook(Hook.PROGRAM, JournalledJdbcRuleManager.program())
 				.explainContains("PLAN=JdbcToEnumerableConverter\n" +
 						"  JdbcTableModify(table=[[" + virtualSchemaName + ", emps_journal]], operation=[INSERT], flattened=[false])\n" +
 						"    JdbcValues(tuples=[[{ 10, 3, 'OnlyMe' }]])\n")
@@ -87,7 +72,7 @@ public class InsertIntegrationTest {
 		CalciteAssert
 				.model(TargetDatabase.JOURNALLED_MODEL)
 				.query("INSERT INTO \"" + virtualSchemaName + "\".\"emps\" (\"empid\", \"last_name\", \"deptno\") SELECT \"deptno\" + 1000, 'added', \"deptno\" FROM \"" + virtualSchemaName + "\".\"depts\"")
-				.withHook(Hook.PROGRAM, program)
+				.withHook(Hook.PROGRAM, JournalledJdbcRuleManager.program())
 				.explainContains("PLAN=JdbcToEnumerableConverter\n" +
 						"  JdbcTableModify(table=[[" + virtualSchemaName + ", emps_journal]], operation=[INSERT], flattened=[false])\n" +
 						"    JdbcProject(empid=[+($0, 1000)], deptno=[$0], last_name=['added'])\n" +
@@ -106,7 +91,7 @@ public class InsertIntegrationTest {
 		CalciteAssert
 				.model(TargetDatabase.JOURNALLED_MODEL)
 				.query("INSERT INTO \"" + virtualSchemaName + "\".\"non_journalled\" (\"id\") VALUES (7)")
-				.withHook(Hook.PROGRAM, program)
+				.withHook(Hook.PROGRAM, JournalledJdbcRuleManager.program())
 				.explainContains("PLAN=JdbcToEnumerableConverter\n" +
 						"  JdbcTableModify(table=[[" + virtualSchemaName + ", non_journalled]], operation=[INSERT], flattened=[false])\n" +
 						"    JdbcValues(tuples=[[{ 7 }]])\n")

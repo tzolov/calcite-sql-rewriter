@@ -1,34 +1,19 @@
 package org.apache.calcite.adapter.jdbc;
 
-import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilder;
 import org.apache.calcite.runtime.Hook;
 import org.apache.calcite.test.CalciteAssert;
-import org.apache.calcite.tools.Program;
-import org.apache.calcite.util.Holder;
 import org.junit.Before;
 import org.junit.Test;
-
-import com.google.common.base.Function;
-import io.pivotal.beach.calcite.programs.ForcedRulesProgram;
-import io.pivotal.beach.calcite.programs.SequenceProgram;
 
 public class UpdateIntegrationTest {
 	private static final String virtualSchemaName = "calcite_sql_rewriter_integration_test"; // Should be "hr" - see TargetDatabase.java
 
 	private static final String actualSchemaName = "calcite_sql_rewriter_integration_test";
 
-	@SuppressWarnings("Guava") // Must conform to Calcite's API
-	private Function<Holder<Program>, Void> program = SequenceProgram.prepend(
-			new ForcedRulesProgram(new JdbcRelBuilder.FactoryFactory(),
-					new JournalledInsertRule(),
-					new JournalledUpdateRule(),
-					new JournalledDeleteRule()
-			)
-	);
-
 	@Before // TODO: find out how to make CalciteAssert run in a transaction then change this to BeforeClass
 	public void rebuildTestDatabase() throws Exception {
 		TargetDatabase.rebuild();
+		JournalledJdbcSchema.Factory.INSTANCE.setAutomaticallyAddRules(false);
 	}
 
 	@Test
@@ -36,7 +21,7 @@ public class UpdateIntegrationTest {
 		CalciteAssert
 				.model(TargetDatabase.JOURNALLED_MODEL)
 				.query("UPDATE \"" + virtualSchemaName + "\".\"depts\" SET \"department_name\"='First' WHERE \"deptno\" = 3")
-				.withHook(Hook.PROGRAM, program)
+				.withHook(Hook.PROGRAM, JournalledJdbcRuleManager.program())
 				.explainContains("PLAN=JdbcToEnumerableConverter\n" +
 						"  JdbcTableModify(table=[[" + virtualSchemaName + ", depts_journal]], operation=[INSERT], flattened=[false])\n" +
 						"    JdbcProject(deptno=[$0], department_name=['First'])\n" +
@@ -55,7 +40,7 @@ public class UpdateIntegrationTest {
 		CalciteAssert
 				.model(TargetDatabase.JOURNALLED_MODEL)
 				.query("UPDATE \"" + virtualSchemaName + "\".\"depts_journal\" SET \"department_name\"='First' WHERE \"deptno\" = 3")
-				.withHook(Hook.PROGRAM, program)
+				.withHook(Hook.PROGRAM, JournalledJdbcRuleManager.program())
 				.explainContains("PLAN=JdbcToEnumerableConverter\n" +
 						"  JdbcTableModify(table=[[" + virtualSchemaName + ", depts_journal]], operation=[UPDATE], updateColumnList=[[department_name]], sourceExpressionList=[['First']], flattened=[false])\n" +
 						"    JdbcProject(deptno=[$0], department_name=[$1], version_number=[$2], subsequent_version_number=[$3], EXPR$0=['First'])\n" +
