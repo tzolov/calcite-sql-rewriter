@@ -12,15 +12,17 @@ or operations that affect the entire data set like `DROP`.
 In-place operations like `UPDATE` or `DELETE` require additional effort to `emulate`: 
 [HAWQ-304](https://issues.apache.org/jira/browse/HAWQ-304), [HIVE-5317](https://issues.apache.org/jira/browse/HIVE-5317)  
 
-This project project provides a workaround that emulates `ISERT`, `UPDATE` and `DELETE` operations by convertying them into 
-append-only `INSERT` and using two additional columns (per-table): `version_number` to keep the latest ROW version 
-and `sequence_version_number` to mark if and when a row is deleted.
+This project provides a workaround that emulates the `INSERT`, `UPDATE` and `DELETE` operations by converting them into 
+append-only `INSERT` such. E.g. instead of updating rows, insert the new version of the row using two 
+additional metadata columns: `version_number` and `subsequent_version_number`. The `version_number` holds the 
+version when the row was inserted. Latest `version_number` represents to the current record version. 
+The `subsequent_version_number` is set only when the row is marked as deleted.
 
-[Apache Calcite](https://calcite.apache.org/) is leveraged as `JDBC` proxy to convert the incoming `INSERT, UDATE and DELTE` 
-operations into `append-only` `INSERTS. It hides the plumbing code. 
+[Apache Calcite](https://calcite.apache.org/) is leveraged to implement this MMVC-like management. 
+Calicte exposes an `JDBC` connection and internally converts all incoming `INSERT, UDATE and DELTE` 
+operations into append-only `INSERT`s as explained by the convention below.  
 
-For example given a business table that should looks like this:
-
+For example given a business table `depts` with two columns `deptno` (key) and `department_name`: 
 ```sql
 CREATE TABLE hr.depts (
   deptno                    SERIAL                   NOT NULL,
@@ -28,8 +30,8 @@ CREATE TABLE hr.depts (
   PRIMARY KEY (deptno)
 );
 ```
-You need to define a corresponding journal table (with name `<your-table-name>_journal`) with `version_number` and `subsequent_version_number` columns like this:
-
+According to the convention you need to define a new `journal` table with name: `<your-table-name>_journal`) adding 
+two metadata columns: `version_number` and `subsequent_version_number` columns:
 ```sql
 CREATE TABLE hr.depts_journal (
   deptno                    SERIAL                   NOT NULL,
@@ -39,12 +41,12 @@ CREATE TABLE hr.depts_journal (
   PRIMARY KEY (deptno, version_number)
 );
 ```
- 
-1. Following `INSERT` statement issued against the Calcite JDBC driver
+Then 
+1. Issuing an `INSERT` statement against the Calcite JDBC driver
 ```sql
 INSERT INTO hr.depts (deptno, department_name) VALUES(666, 'Pivotal');
 ```
-would be translated into SQL statement like this: 
+is translated into SQL statement against the journal table: 
 ```sql
 INSERT INTO hr.depts_journal (deptno, department_name) VALUES (666, 'Pivotal');
 ```
@@ -82,8 +84,7 @@ INSERT INTO hr.depts_journal (deptno, department_name, version_number, subsequen
   WITH link_last AS (
       SELECT
         *,
-        MAX(version_number)
-        OVER (PARTITION BY deptno) AS last_version_number
+        MAX(version_number) OVER (PARTITION BY deptno) AS last_version_number
       FROM hr.depts_journal
       WHERE deptno = 666
   )
@@ -107,8 +108,7 @@ is converted this `SELECT` statement:
 WITH link_last AS (
     SELECT
       *,
-      MAX(version_number)
-      OVER (PARTITION BY deptno) AS last_version_number
+      MAX(version_number) OVER (PARTITION BY deptno) AS last_version_number
     FROM hr.depts_journal
 )
 SELECT
