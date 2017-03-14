@@ -133,6 +133,7 @@ When using this project, it is important to be aware of the following limitation
   simultaneously, one of the users changes will be lost, even if they were updating different columns. Similarly, if one
   user deletes a record while another is updating it, the update may "win", causing the record to not be deleted.
 * Unique indexes cannot be defined. Similarly, UPSERT (`ON CONFLICT UPDATE`) is not supported.
+* Table manipulations (DDL) are not supported.
 
 ### References
 * [HAWQ-304](https://issues.apache.org/jira/browse/HAWQ-304) Support update and delete on non-heap tables
