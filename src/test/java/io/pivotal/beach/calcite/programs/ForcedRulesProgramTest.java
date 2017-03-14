@@ -22,7 +22,7 @@ public class ForcedRulesProgramTest {
 	private RelTraitSet relTraitSet;
 	private JdbcRelBuilderFactoryFactory superFactory;
 	private JdbcRelBuilderFactory miniFactory;
-	private BasicForcedRule rule;
+	private ForcedRule rule;
 	private Program program;
 	private RelNode inNode;
 
@@ -33,7 +33,7 @@ public class ForcedRulesProgramTest {
 		relTraitSet = RelTraitSet.createEmpty();
 		superFactory = Mockito.mock(JdbcRelBuilderFactoryFactory.class);
 		miniFactory = Mockito.mock(JdbcRelBuilderFactory.class);
-		rule = Mockito.mock(BasicForcedRule.class);
+		rule = Mockito.mock(ForcedRule.class);
 		program = new ForcedRulesProgram(superFactory, rule);
 		inNode = Mockito.mock(RelNode.class);
 
@@ -116,7 +116,7 @@ public class ForcedRulesProgramTest {
 
 	@Test
 	public void testRun_onlyAppliesOneRulePerNode() {
-		BasicForcedRule rule2 = Mockito.mock(BasicForcedRule.class);
+		ForcedRule rule2 = Mockito.mock(ForcedRule.class);
 		RelNode outNode = Mockito.mock(RelNode.class);
 		Mockito.doReturn(outNode).when(rule).apply(Mockito.same(inNode), Mockito.any());
 

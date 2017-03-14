@@ -19,9 +19,9 @@ public class ForcedRulesProgram implements Program {
 	private static final Logger logger = LoggerFactory.getLogger(ForcedRulesProgram.class);
 
 	private final JdbcRelBuilderFactoryFactory relBuilderFactoryFactory;
-	private final BasicForcedRule[] rules;
+	private final ForcedRule[] rules;
 
-	public ForcedRulesProgram(JdbcRelBuilderFactoryFactory relBuilderFactoryFactory, BasicForcedRule... rules) {
+	public ForcedRulesProgram(JdbcRelBuilderFactoryFactory relBuilderFactoryFactory, ForcedRule... rules) {
 		this.relBuilderFactoryFactory = relBuilderFactoryFactory;
 		this.rules = rules;
 	}
@@ -38,9 +38,9 @@ public class ForcedRulesProgram implements Program {
 		return replace(rel, rules, relBuilderFactoryFactory.create(planner.getContext()));
 	}
 
-	private RelNode replace(RelNode original, BasicForcedRule[] rules, JdbcRelBuilderFactory relBuilderFactory) {
+	private RelNode replace(RelNode original, ForcedRule[] rules, JdbcRelBuilderFactory relBuilderFactory) {
 		RelNode p = original;
-		for (BasicForcedRule rule : rules) {
+		for (ForcedRule rule : rules) {
 			RelNode updated = rule.apply(p, relBuilderFactory);
 			if (updated != null) {
 				logger.trace("Rule: " + rule.toString() +

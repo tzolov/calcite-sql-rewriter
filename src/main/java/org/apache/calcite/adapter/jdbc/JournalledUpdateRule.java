@@ -13,7 +13,7 @@ import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.util.Pair;
 
-public class JournalledUpdateRule extends AbstractBasicFourceRuleRule {
+public class JournalledUpdateRule extends AbstractForcedRule {
 
 	public JournalledUpdateRule() {
 		super(Operation.UPDATE);

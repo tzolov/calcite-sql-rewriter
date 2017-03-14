@@ -6,13 +6,13 @@ import org.apache.calcite.rel.core.TableModify.Operation;
 import org.apache.calcite.rel.logical.LogicalTableModify;
 import org.apache.calcite.schema.Table;
 
-import io.pivotal.beach.calcite.programs.BasicForcedRule;
+import io.pivotal.beach.calcite.programs.ForcedRule;
 
-public abstract class AbstractBasicFourceRuleRule implements BasicForcedRule {
+public abstract class AbstractForcedRule implements ForcedRule {
 
 	private final LogicalTableModify.Operation operation;
 
-	protected AbstractBasicFourceRuleRule(Operation operation) {
+	protected AbstractForcedRule(Operation operation) {
 		this.operation = operation;
 	}
 

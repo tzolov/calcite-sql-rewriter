@@ -11,7 +11,7 @@ import org.apache.calcite.rel.logical.LogicalTableModify;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 
-public class JournalledDeleteRule extends AbstractBasicFourceRuleRule {
+public class JournalledDeleteRule extends AbstractForcedRule {
 
 	public JournalledDeleteRule() {
 		super(Operation.DELETE);

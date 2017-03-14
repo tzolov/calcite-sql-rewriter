@@ -12,14 +12,13 @@ import org.apache.calcite.rel.logical.LogicalTableModify;
 import org.apache.calcite.rel.logical.LogicalValues;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
-import org.apache.calcite.schema.Table;
 import org.apache.calcite.util.Pair;
 
 /**
  * Created by tzoloc on 11/25/16.
  */
 
-public class JournalledInsertRule extends AbstractBasicFourceRuleRule {
+public class JournalledInsertRule extends AbstractForcedRule {
 
 	public JournalledInsertRule() {
 		super(Operation.INSERT);
