@@ -1,0 +1,6 @@
+{
+  "jdbcDriver": "org.hsqldb.jdbc.JDBCDriver",
+  "jdbcUrl": "jdbc:hsqldb:mem:any",
+  "jdbcUser": "",
+  "jdbcPassword": ""
+}

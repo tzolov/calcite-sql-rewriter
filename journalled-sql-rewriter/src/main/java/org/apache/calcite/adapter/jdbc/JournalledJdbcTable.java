@@ -9,6 +9,8 @@ import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 
 import com.google.common.collect.ImmutableList;
 
+import java.util.List;
+
 class JournalledJdbcTable extends JdbcTable {
 	private final JdbcTable journalTable;
 	private final JournalledJdbcSchema journalledJdbcSchema;
@@ -45,6 +47,10 @@ class JournalledJdbcTable extends JdbcTable {
 		return journalTable;
 	}
 
+	List<String> getKeyColumnNames() {
+		return keyColumnNames;
+	}
+
 	@Override
 	public RelNode toRel(RelOptTable.ToRelContext context, RelOptTable relOptTable) {
 		JdbcRelBuilder relBuilder = relBuilderFactory.create(
@@ -65,7 +71,7 @@ class JournalledJdbcTable extends JdbcTable {
 		RexInputRef maxVersionField = relBuilder.appendField(relBuilder.makeOver(
 				SqlStdOperatorTable.MAX,
 				ImmutableList.of(versionField),
-				relBuilder.fields(keyColumnNames)
+				relBuilder.fields(getKeyColumnNames())
 		));
 
 		// WHERE <version_field> = <maxVersionField> AND <subsequent_version_field> IS NULL

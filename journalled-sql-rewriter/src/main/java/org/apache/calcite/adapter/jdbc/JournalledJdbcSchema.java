@@ -125,11 +125,14 @@ public class JournalledJdbcSchema extends JdbcSchema {
 		try {
 			dataSource = parseDataSource(operand);
 		} catch (Exception e) {
-			throw new RuntimeException("Error while reading dataSource", e);
+			throw new IllegalArgumentException("Error while reading dataSource", e);
 		}
 		String catalog = (String) operand.get("jdbcCatalog");
 		String schema = (String) operand.get("jdbcSchema");
-		final Expression expression = Schemas.subSchemaExpression(parentSchema, name, JdbcSchema.class);
+		Expression expression = null;
+		if (parentSchema != null) {
+			expression = Schemas.subSchemaExpression(parentSchema, name, JdbcSchema.class);
+		}
 		final SqlDialect dialect = createDialect(dataSource);
 		final JdbcConvention convention = JdbcConvention.of(dialect, expression, name);
 		return new JournalledJdbcSchema(dataSource, dialect, convention, catalog, schema, operand);
