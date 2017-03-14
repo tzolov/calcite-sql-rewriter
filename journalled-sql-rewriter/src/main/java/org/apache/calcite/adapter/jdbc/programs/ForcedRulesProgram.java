@@ -4,8 +4,6 @@ import java.util.List;
 
 import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilderFactory;
 import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilderFactoryFactory;
-import org.apache.calcite.plan.RelOptLattice;
-import org.apache.calcite.plan.RelOptMaterialization;
 import org.apache.calcite.plan.RelOptPlanner;
 import org.apache.calcite.plan.RelOptUtil;
 import org.apache.calcite.plan.RelTraitSet;
@@ -30,9 +28,7 @@ public class ForcedRulesProgram implements Program {
 	public RelNode run(
 			RelOptPlanner planner,
 			RelNode rel,
-			RelTraitSet requiredOutputTraits,
-			List<RelOptMaterialization> materializations,
-			List<RelOptLattice> lattices
+			RelTraitSet requiredOutputTraits
 	) {
 		logger.debug("Running forced rules on:\n" + RelOptUtil.toString(rel));
 		return replace(rel, rules, relBuilderFactoryFactory.create(planner.getContext()));

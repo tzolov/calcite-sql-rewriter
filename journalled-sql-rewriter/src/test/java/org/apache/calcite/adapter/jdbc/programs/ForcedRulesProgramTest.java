@@ -46,7 +46,7 @@ public class ForcedRulesProgramTest {
 		program = new ForcedRulesProgram(superFactory);
 		Mockito.doReturn(ImmutableList.of()).when(inNode).getInputs();
 
-		RelNode result = program.run(planner, inNode, relTraitSet, Collections.emptyList(), Collections.emptyList());
+		RelNode result = program.run(planner, inNode, relTraitSet);
 
 		Assert.assertSame(inNode, result);
 		Mockito.verify(inNode, Mockito.never()).replaceInput(Mockito.anyInt(), Mockito.any());
@@ -54,7 +54,7 @@ public class ForcedRulesProgramTest {
 
 	@Test
 	public void testRun_sendsRelBuilderFactory() {
-		program.run(planner, inNode, relTraitSet, Collections.emptyList(), Collections.emptyList());
+		program.run(planner, inNode, relTraitSet);
 
 		Mockito.verify(rule).apply(Mockito.any(), Mockito.same(miniFactory));
 	}
@@ -70,7 +70,7 @@ public class ForcedRulesProgramTest {
 		Mockito.doReturn(ImmutableList.of()).when(node2b).getInputs();
 		Mockito.doReturn(ImmutableList.of()).when(node3aa).getInputs();
 
-		RelNode result = program.run(planner, inNode, relTraitSet, Collections.emptyList(), Collections.emptyList());
+		RelNode result = program.run(planner, inNode, relTraitSet);
 
 		Assert.assertSame(inNode, result);
 		Mockito.verify(rule).apply(Mockito.same(inNode), Mockito.any());
@@ -84,7 +84,7 @@ public class ForcedRulesProgramTest {
 		RelNode outNode = Mockito.mock(RelNode.class);
 		Mockito.doReturn(outNode).when(rule).apply(Mockito.same(inNode), Mockito.any());
 
-		RelNode result = program.run(planner, inNode, relTraitSet, Collections.emptyList(), Collections.emptyList());
+		RelNode result = program.run(planner, inNode, relTraitSet);
 
 		Assert.assertSame(outNode, result);
 	}
@@ -94,7 +94,7 @@ public class ForcedRulesProgramTest {
 		RelNode outNode = Mockito.mock(RelNode.class);
 		Mockito.doReturn(outNode).when(rule).apply(Mockito.same(inNode), Mockito.any());
 
-		program.run(planner, inNode, relTraitSet, Collections.emptyList(), Collections.emptyList());
+		program.run(planner, inNode, relTraitSet);
 
 		Mockito.verify(outNode).getInputs();
 	}
@@ -108,7 +108,7 @@ public class ForcedRulesProgramTest {
 		Mockito.doReturn(ImmutableList.of(node2a, node2b)).when(inNode).getInputs();
 		Mockito.doReturn(outNode).when(rule).apply(Mockito.same(node2b), Mockito.any());
 
-		RelNode result = program.run(planner, inNode, relTraitSet, Collections.emptyList(), Collections.emptyList());
+		RelNode result = program.run(planner, inNode, relTraitSet);
 
 		Assert.assertSame(inNode, result);
 		Mockito.verify(inNode).replaceInput(Mockito.eq(1), Mockito.same(outNode));
@@ -122,7 +122,7 @@ public class ForcedRulesProgramTest {
 
 		program = new ForcedRulesProgram(superFactory, rule, rule2);
 
-		program.run(planner, inNode, relTraitSet, Collections.emptyList(), Collections.emptyList());
+		program.run(planner, inNode, relTraitSet);
 
 		Mockito.verify(rule).apply(Mockito.same(inNode), Mockito.any());
 		Mockito.verify(rule2, Mockito.never()).apply(Mockito.any(), Mockito.any());
