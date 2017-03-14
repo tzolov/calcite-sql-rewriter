@@ -123,9 +123,7 @@ INSERT INTO hr.depts_journal (deptno, department_name, version_number, subsequen
      version_number,
      subsequent_version_number,
      MAX(version_number) OVER (PARTITION BY deptno) AS $f4
-   FROM hr.depts_journal
- ) AS t
+   FROM hr.depts_journal) AS t
  WHERE version_number = $f4
        AND subsequent_version_number IS NULL
-       AND deptno = 666
-);
+       AND deptno = 666);
