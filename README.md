@@ -3,25 +3,26 @@ Converts `INSERT`, `UPDATE` and `DELETE` into append-only INSERT statements.
 Useful for SQL-on-Hadoop like `Apache HAWQ` that doesn't provide in-place mutation operations yet.
 
 ### Overview
-The `Sql-On-Hadoop` engines like Apache HAWQ often use `HDFS` (or alike) to store the data.
+The `Sql-On-Hadoop` engines like [Apache HAWQ](http://hawq.incubator.apache.org/) often use `HDFS` (or alike) to store the data.
 Later are design for high throughput scans. They does not allow random access or in-place data mutation.
 
 Because of those limitations the `Sql-On-Hadoop` naturally support support append-only operations like `INSERT`
 or operations that affect the entire data set like `DROP`.
 
-In-place operations like `UPDATE` or `DELETE` require additional effort to 'emulate':
+In-place operations like `UPDATE` or `DELETE` require additional effort to _emulate_:
 [HAWQ-304](https://issues.apache.org/jira/browse/HAWQ-304), [HIVE-5317](https://issues.apache.org/jira/browse/HIVE-5317)
 
-This project provides a workaround that emulates the `INSERT`, `UPDATE` and `DELETE` operations by converting them into
-append-only `INSERT`s. For example, instead of updating rows, insert the new version of the row using two
-additional metadata columns: `version_number` and `subsequent_version_number`. The `version_number` holds the
-version when the row was inserted. Latest `version_number` represents to the current record version.
-The `subsequent_version_number` is set only when the row is marked as deleted, and can be populated on older records by
-background archival tasks.
+This project _emulates_ the `INSERT`, `UPDATE` and `DELETE` operations by converting them into
+append-only `INSERT`s. Instead of updating rows in-place it inserts the new version of the row using two
+additional metadata columns: `version_number` and `subsequent_version_number`. 
 
-[Apache Calcite](https://calcite.apache.org/) is leveraged to implement this MMVC-like management.
-Calcite exposes a `JDBC` connection and internally converts all incoming `INSERT`, `UPDATE` and `DELETE`
-operations into append-only `INSERT`s as explained by the convention below.
+The `version_number` holds the version when the row was inserted in the table. The latest (or highest `version_number` 
+represents the current record version. The `subsequent_version_number` is set only when the row is marked as deleted, 
+and can be populated on older records by background archival tasks.
+
+[Apache Calcite](https://calcite.apache.org/) is leveraged to implement the row version management. Externally it exposes a 
+plain `JDBC` interface while internally it converts the incoming `INSERT`, `UPDATE` and `DELETE` statements into 
+append-only `INSERT`s and sends them to pre-configured backend DB like [Apache HAWQ](http://hawq.incubator.apache.org/).
 
 For example given a business table `depts` with two columns `deptno` (key) and `department_name`:
 ```sql
@@ -46,7 +47,10 @@ The `version_number` is generated on every row insert and holds the `CURRENT_TIM
 represents to the current row record.
 The `subsequent_version_number` is set when the row is marked as deleted.
 
-Then
+Note that the result key is composed of the busyness keys (`deptno`) and the version metadata (`version_number`). 
+
+Here is how the `INSERT`, `UPDATE`, `DELETE` and `SELECT` statements are represented internally.
+
 1. Issuing an `INSERT` statement against the Calcite JDBC driver
 ```sql
 INSERT INTO hr.depts (deptno, department_name) VALUES (666, 'Pivotal');
