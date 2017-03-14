@@ -1,4 +1,4 @@
-package io.pivotal.beach.calcite;
+package io.pivotal.calcite.sqlrewriter;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -11,7 +11,7 @@ public class Main {
 		Class.forName(org.apache.calcite.jdbc.Driver.class.getName());
 		Properties info = new Properties();
 		info.setProperty("lex", "JAVA");
-		info.setProperty("model", "src/main/resources/myTestModel.json");
+		info.setProperty("model", "journalled-sql-rewriter-example/src/main/resources/myTestModel.json");
 		Connection calConnection = DriverManager.getConnection("jdbc:calcite:", info);
 
 		Statement statement = calConnection.createStatement();
