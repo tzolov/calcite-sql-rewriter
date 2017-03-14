@@ -6,7 +6,7 @@ import org.apache.calcite.rel.core.TableModify.Operation;
 import org.apache.calcite.rel.logical.LogicalTableModify;
 import org.apache.calcite.schema.Table;
 
-import io.pivotal.beach.calcite.programs.ForcedRule;
+import org.apache.calcite.adapter.jdbc.programs.ForcedRule;
 
 public abstract class AbstractForcedRule implements ForcedRule {
 

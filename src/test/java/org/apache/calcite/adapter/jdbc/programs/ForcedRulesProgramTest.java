@@ -1,4 +1,4 @@
-package io.pivotal.beach.calcite.programs;
+package org.apache.calcite.adapter.jdbc.programs;
 
 import java.util.Collections;
 

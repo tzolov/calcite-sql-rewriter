@@ -1,8 +1,8 @@
 package org.apache.calcite.adapter.jdbc;
 
 import com.google.common.base.Function;
-import io.pivotal.beach.calcite.programs.ForcedRulesProgram;
-import io.pivotal.beach.calcite.programs.SequenceProgram;
+import org.apache.calcite.adapter.jdbc.programs.ForcedRulesProgram;
+import org.apache.calcite.adapter.jdbc.programs.SequenceProgram;
 import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilder;
 import org.apache.calcite.runtime.Hook;
 import org.apache.calcite.tools.Program;
