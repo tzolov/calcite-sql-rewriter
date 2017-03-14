@@ -6,33 +6,22 @@ import java.util.List;
 import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilder;
 import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilderFactory;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.core.TableModify.Operation;
 import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.logical.LogicalTableModify;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.util.Pair;
 
-import io.pivotal.beach.calcite.programs.BasicForcedRule;
+public class JournalledUpdateRule extends AbstractBasicFourceRuleRule {
 
-public class JournalledUpdateRule implements BasicForcedRule {
+	public JournalledUpdateRule() {
+		super(Operation.UPDATE);
+	}
+
 	@Override
-	public RelNode apply(RelNode originalRel, JdbcRelBuilderFactory relBuilderFactory) {
-		if (!(originalRel instanceof LogicalTableModify)) {
-			return null;
-		}
-
-		LogicalTableModify tableModify = (LogicalTableModify) originalRel;
-
-		if (!tableModify.isUpdate()) {
-			return null;
-		}
-
-		JdbcTable jdbcTable = JdbcTableUtils.getJdbcTable(tableModify);
-		if (!(jdbcTable instanceof JournalledJdbcTable)) {
-			// Not a journal table; nothing to do
-			return null;
-		}
-		JournalledJdbcTable journalTable = (JournalledJdbcTable) jdbcTable;
+	public RelNode doApply(LogicalTableModify tableModify, JournalledJdbcTable journalTable,
+			JdbcRelBuilderFactory relBuilderFactory) {
 
 		if (!(tableModify.getInput() instanceof LogicalProject)) {
 			throw new IllegalStateException("Unknown Calcite UPDATE structure");
@@ -46,9 +35,10 @@ public class JournalledUpdateRule implements BasicForcedRule {
 		for (Pair<RexNode, String> field : project.getNamedProjects()) {
 			if (field.getKey() instanceof RexInputRef) {
 				int index = tableModify.getUpdateColumnList().indexOf(field.getValue());
-				if (index >=0 ) {
+				if (index >= 0) {
 					desiredFields.add(tableModify.getSourceExpressionList().get(index));
-				} else {
+				}
+				else {
 					desiredFields.add(field.getKey());
 				}
 				desiredNames.add(field.getValue());
@@ -56,7 +46,7 @@ public class JournalledUpdateRule implements BasicForcedRule {
 		}
 
 		JdbcRelBuilder relBuilder = relBuilderFactory.create(
-				originalRel.getCluster(),
+				tableModify.getCluster(),
 				tableModify.getTable().getRelOptSchema()
 		);
 

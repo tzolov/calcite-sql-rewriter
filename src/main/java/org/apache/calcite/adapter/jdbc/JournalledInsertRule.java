@@ -6,6 +6,7 @@ import java.util.List;
 import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilder;
 import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilderFactory;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.core.TableModify.Operation;
 import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.logical.LogicalTableModify;
 import org.apache.calcite.rel.logical.LogicalValues;
@@ -14,34 +15,22 @@ import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.util.Pair;
 
-import io.pivotal.beach.calcite.programs.BasicForcedRule;
-
 /**
  * Created by tzoloc on 11/25/16.
  */
 
-public class JournalledInsertRule implements BasicForcedRule {
+public class JournalledInsertRule extends AbstractBasicFourceRuleRule {
+
+	public JournalledInsertRule() {
+		super(Operation.INSERT);
+	}
+
 	@Override
-	public RelNode apply(RelNode originalRel, JdbcRelBuilderFactory relBuilderFactory) {
-		if (!(originalRel instanceof LogicalTableModify)) {
-			return null;
-		}
-
-		LogicalTableModify tableModify = (LogicalTableModify) originalRel;
-
-		if (!tableModify.isInsert()) {
-			return null;
-		}
-
-		Table baseTable = JdbcTableUtils.getJdbcTable(tableModify);
-		if(!(baseTable instanceof JournalledJdbcTable)) {
-			// Not a journal table; nothing to do
-			return null;
-		}
-		JournalledJdbcTable journalTable = (JournalledJdbcTable) baseTable;
+	public RelNode doApply(LogicalTableModify tableModify, JournalledJdbcTable journalTable,
+			JdbcRelBuilderFactory relBuilderFactory) {
 
 		JdbcRelBuilder relBuilder = relBuilderFactory.create(
-				originalRel.getCluster(),
+				tableModify.getCluster(),
 				tableModify.getTable().getRelOptSchema()
 		);
 
@@ -51,7 +40,8 @@ public class JournalledInsertRule implements BasicForcedRule {
 			// TODO: do we need to do anything here?
 			relBuilder.push(input);
 
-		} else if (input instanceof LogicalProject) {
+		}
+		else if (input instanceof LogicalProject) {
 
 			LogicalProject project = (LogicalProject) input;
 			List<RexNode> desiredFields = new ArrayList<>();
@@ -66,7 +56,8 @@ public class JournalledInsertRule implements BasicForcedRule {
 			relBuilder.push(project.getInput());
 			relBuilder.project(desiredFields, desiredNames);
 
-		} else {
+		}
+		else {
 			throw new IllegalStateException("Unknown Calcite INSERT structure");
 		}
 
@@ -76,5 +67,6 @@ public class JournalledInsertRule implements BasicForcedRule {
 		);
 
 		return relBuilder.build();
+
 	}
 }

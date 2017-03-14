@@ -57,12 +57,19 @@ VALUES (1, 1, 'Peter', 'Pan'), (2, 1, 'Ian', 'Bibian'), (3, 2, 'Victor', 'Struga
 -- Employee 1 moves to department 2
 INSERT INTO hr.emps_journal (empid, deptno, first_name, last_name) VALUES (1, 2, 'Peter', 'Pan');
 
--- INSERT
---INSERT INTO hr.depts (deptno, department_name) VALUES(666, 'Pivotal');
+
+-- How the overwite rules works
+
+-- INSERT --
+-- From:
+INSERT INTO hr.depts (deptno, department_name) VALUES(666, 'Pivotal');
+-- To:
 INSERT INTO hr.depts_journal (deptno, department_name) VALUES (666, 'Pivotal');
 
--- UPDATE
--- UPDATE hr.depts SET department_name='First' WHERE deptno = 1;
+-- UPDATE --
+-- From:
+UPDATE hr.depts SET department_name='New Name' WHERE deptno = 666;
+-- To:
 INSERT INTO hr.depts_journal (deptno, department_name)
   WITH link_last AS (
       SELECT
@@ -70,11 +77,55 @@ INSERT INTO hr.depts_journal (deptno, department_name)
         MAX(version_number)
         OVER (PARTITION BY deptno) AS last_version_number
       FROM hr.depts_journal
-      WHERE deptno = 1
+      WHERE deptno = 666
   )
   SELECT
     deptno,
-    'Name2' as department_name
+    'New Name' as department_name
   FROM link_last
   WHERE subsequent_version_number IS NULL
         AND version_number = last_version_number;
+
+-- DELETE --
+-- From:
+DELETE FROM hr.depts WHERE deptno=666;
+-- To:
+INSERT INTO hr.depts_journal (deptno, department_name, version_number, subsequent_version_number)
+  WITH link_last AS (
+      SELECT
+        *,
+        MAX(version_number)
+        OVER (PARTITION BY deptno) AS last_version_number
+      FROM hr.depts_journal
+      WHERE deptno = 666
+  )
+  SELECT
+    deptno,
+    department_name,
+    CURRENT_TIMESTAMP AS version_number,
+    CURRENT_TIMESTAMP AS subsequent_version_number
+  FROM link_last
+  WHERE subsequent_version_number IS NULL
+        AND version_number = last_version_number;
+
+-- To(2):
+INSERT INTO hr.depts_journal (deptno, department_name, version_number, subsequent_version_number)
+(
+ SELECT
+   deptno,
+   department_name,
+   CURRENT_TIMESTAMP AS version_number,
+   CURRENT_TIMESTAMP AS subsequent_version_number
+ FROM (
+   SELECT
+     deptno,
+     department_name,
+     version_number,
+     subsequent_version_number,
+     MAX(version_number) OVER (PARTITION BY deptno) AS $f4
+   FROM hr.depts_journal
+ ) AS t
+ WHERE version_number = $f4
+       AND subsequent_version_number IS NULL
+       AND deptno = 666
+);
