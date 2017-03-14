@@ -1,6 +1,7 @@
 # calcite-sql-rewriter
 Converts `INSERT`, `UPDATE` and `DELETE` into append-only INSERT statements.
 Useful for SQL-on-Hadoop like `Apache HAWQ` that doesn't provide in-place mutation operations yet.
+[ ![Download](https://api.bintray.com/packages/big-data/maven/calcite-sql-rewriter/images/download.svg) ](https://api.bintray.com/packages/big-data/maven/calcite-sql-rewriter/_latestVersion)
 
 ### Overview
 The `Sql-On-Hadoop` engines like [Apache HAWQ](http://hawq.incubator.apache.org/) often use `HDFS` (or alike) to store the data.
