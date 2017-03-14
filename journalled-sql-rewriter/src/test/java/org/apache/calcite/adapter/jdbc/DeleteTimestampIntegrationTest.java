@@ -5,20 +5,21 @@ import org.apache.calcite.test.CalciteAssert;
 import org.junit.Before;
 import org.junit.Test;
 
-public class DeleteIntegrationTest {
+public class DeleteTimestampIntegrationTest {
 	private static final String virtualSchemaName = "calcite_sql_rewriter_integration_test"; // Should be "hr" - see TargetDatabase.java
 	private static final String actualSchemaName = "calcite_sql_rewriter_integration_test";
+	private final JournalledJdbcSchema.VersionType versionType = JournalledJdbcSchema.VersionType.TIMESTAMP;
 
 	@Before // TODO: find out how to make CalciteAssert run in a transaction then change this to BeforeClass
 	public void rebuildTestDatabase() throws Exception {
-		TargetDatabase.rebuild();
+		TargetDatabase.rebuild(versionType);
 		JournalledJdbcSchema.Factory.INSTANCE.setAutomaticallyAddRules(false);
 	}
 
 	@Test
 	public void testRewriting() {
 		CalciteAssert
-				.model(TargetDatabase.JOURNALLED_MODEL)
+				.model(TargetDatabase.makeJournalledModel(versionType))
 				.query("DELETE FROM \"" + virtualSchemaName + "\".\"depts\" WHERE \"deptno\"=3")
 				.withHook(Hook.PROGRAM, JournalledJdbcRuleManager.program())
 				.explainContains("PLAN=JdbcToEnumerableConverter\n" +
@@ -37,7 +38,7 @@ public class DeleteIntegrationTest {
 	@Test
 	public void testDeletingAbsentRecord() {
 		CalciteAssert
-				.model(TargetDatabase.JOURNALLED_MODEL)
+				.model(TargetDatabase.makeJournalledModel(versionType))
 				.query("DELETE FROM \"" + virtualSchemaName + "\".\"depts\" WHERE \"deptno\"=999")
 				.withHook(Hook.PROGRAM, JournalledJdbcRuleManager.program())
 				.updates(0);
@@ -46,7 +47,7 @@ public class DeleteIntegrationTest {
 	@Test
 	public void testDeletingByNonKeyColumns() {
 		CalciteAssert
-				.model(TargetDatabase.JOURNALLED_MODEL)
+				.model(TargetDatabase.makeJournalledModel(versionType))
 				.query("DELETE FROM \"" + virtualSchemaName + "\".\"depts\" WHERE \"department_name\"='Dep3'")
 				.withHook(Hook.PROGRAM, JournalledJdbcRuleManager.program())
 				.planUpdateHasSql("INSERT INTO \"" + actualSchemaName + "\".\"depts_journal\" (\"deptno\", \"department_name\", \"version_number\", \"subsequent_version_number\")\n" +

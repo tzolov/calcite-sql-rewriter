@@ -3,22 +3,48 @@ package org.apache.calcite.adapter.jdbc;
 import org.apache.calcite.runtime.Hook;
 import org.apache.calcite.test.CalciteAssert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+@RunWith(Parameterized.class)
 public class InsertIntegrationTest {
 	private static final String virtualSchemaName = "calcite_sql_rewriter_integration_test"; // Should be "hr" - see TargetDatabase.java
 	private static final String actualSchemaName = "calcite_sql_rewriter_integration_test";
+	private final JournalledJdbcSchema.VersionType versionType;
 
-	@Before // TODO: find out how to make CalciteAssert run in a transaction then change this to BeforeClass
-	public void rebuildTestDatabase() throws Exception {
-		TargetDatabase.rebuild();
+	@Parameterized.Parameters(name = "{index}: {0}")
+	public static Collection<Object[]> data() {
+		List<Object[]> result = new ArrayList<>();
+		for(JournalledJdbcSchema.VersionType vt : JournalledJdbcSchema.VersionType.values()) {
+			result.add(new Object[] {vt});
+		}
+		return result;
+	}
+
+	@BeforeClass
+	public static void avoidGlobals() throws Exception {
 		JournalledJdbcSchema.Factory.INSTANCE.setAutomaticallyAddRules(false);
+	}
+
+	public InsertIntegrationTest(JournalledJdbcSchema.VersionType versionType) throws Exception {
+		this.versionType = versionType;
+	}
+
+	@Before // TODO: find out how to make CalciteAssert run in a transaction then move this to the constructor
+	public void rebuildTestDatabase() throws Exception {
+		TargetDatabase.rebuild(versionType);
 	}
 
 	@Test
 	public void testRewritingDeptsWithoutAllColumns() {
 		CalciteAssert
-				.model(TargetDatabase.JOURNALLED_MODEL)
+				.model(TargetDatabase.makeJournalledModel(versionType))
 				.query("INSERT INTO \"" + virtualSchemaName + "\".\"depts\" (\"deptno\") VALUES (696)")
 				.withHook(Hook.PROGRAM, JournalledJdbcRuleManager.program())
 				.explainContains("PLAN=JdbcToEnumerableConverter\n" +
@@ -31,7 +57,7 @@ public class InsertIntegrationTest {
 	@Test
 	public void testRewriting() {
 		CalciteAssert
-				.model(TargetDatabase.JOURNALLED_MODEL)
+				.model(TargetDatabase.makeJournalledModel(versionType))
 				.query("INSERT INTO \"" + virtualSchemaName + "\".\"depts\" (\"deptno\", \"department_name\") VALUES (696, 'Pivotal')")
 				.withHook(Hook.PROGRAM, JournalledJdbcRuleManager.program())
 				.explainContains("PLAN=JdbcToEnumerableConverter\n" +
@@ -44,7 +70,7 @@ public class InsertIntegrationTest {
 	@Test
 	public void testRewritingWithMetaColumnsInTheMiddle() {
 		CalciteAssert
-				.model(TargetDatabase.JOURNALLED_MODEL)
+				.model(TargetDatabase.makeJournalledModel(versionType))
 				.query("INSERT INTO \"" + virtualSchemaName + "\".\"emps\" (\"empid\", \"deptno\", \"first_name\", \"last_name\") VALUES (99, 3, 'Zig', 'Zag')")
 				.withHook(Hook.PROGRAM, JournalledJdbcRuleManager.program())
 				.explainContains("PLAN=JdbcToEnumerableConverter\n" +
@@ -57,7 +83,7 @@ public class InsertIntegrationTest {
 	@Test
 	public void testRewritingWithoutAllColumns() {
 		CalciteAssert
-				.model(TargetDatabase.JOURNALLED_MODEL)
+				.model(TargetDatabase.makeJournalledModel(versionType))
 				.query("INSERT INTO \"" + virtualSchemaName + "\".\"emps\" (\"empid\", \"deptno\", \"last_name\") VALUES (10, 3, 'OnlyMe')")
 				.withHook(Hook.PROGRAM, JournalledJdbcRuleManager.program())
 				.explainContains("PLAN=JdbcToEnumerableConverter\n" +
@@ -70,7 +96,7 @@ public class InsertIntegrationTest {
 	@Test
 	public void testInsertSelect() {
 		CalciteAssert
-				.model(TargetDatabase.JOURNALLED_MODEL)
+				.model(TargetDatabase.makeJournalledModel(versionType))
 				.query("INSERT INTO \"" + virtualSchemaName + "\".\"emps\" (\"empid\", \"last_name\", \"deptno\") SELECT \"deptno\" + 1000, 'added', \"deptno\" FROM \"" + virtualSchemaName + "\".\"depts\"")
 				.withHook(Hook.PROGRAM, JournalledJdbcRuleManager.program())
 				.explainContains("PLAN=JdbcToEnumerableConverter\n" +
@@ -89,7 +115,7 @@ public class InsertIntegrationTest {
 	@Test
 	public void testNonJournalled() {
 		CalciteAssert
-				.model(TargetDatabase.JOURNALLED_MODEL)
+				.model(TargetDatabase.makeJournalledModel(versionType))
 				.query("INSERT INTO \"" + virtualSchemaName + "\".\"non_journalled\" (\"id\") VALUES (7)")
 				.withHook(Hook.PROGRAM, JournalledJdbcRuleManager.program())
 				.explainContains("PLAN=JdbcToEnumerableConverter\n" +

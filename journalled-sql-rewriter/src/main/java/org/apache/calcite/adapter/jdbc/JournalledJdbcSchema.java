@@ -33,7 +33,25 @@ public class JournalledJdbcSchema extends JdbcSchema {
 	private final String journalSuffix;
 	private final String versionField;
 	private final String subsequentVersionField;
+	private final VersionType versionType;
 	private ImmutableMap<String, JdbcTable> tableMap;
+
+	public enum VersionType {
+		TIMESTAMP,
+		BIGINT
+	}
+
+	private static VersionType getVersionType(String name) {
+		if (name == null) {
+			return VersionType.TIMESTAMP;
+		}
+		for (VersionType v : VersionType.values()) {
+			if (name.equalsIgnoreCase(v.name())) {
+				return v;
+			}
+		}
+		throw new IllegalArgumentException("Unknown version type: " + name);
+	}
 
 	private void addTable(String name, Object keys) {
 		String[] parsedKeys;
@@ -67,6 +85,7 @@ public class JournalledJdbcSchema extends JdbcSchema {
 		journalSuffix = (String) operand.get("journalSuffix");
 		versionField = (String) operand.get("journalVersionField");
 		subsequentVersionField = (String) operand.get("journalSubsequentVersionField");
+		versionType = getVersionType((String) operand.get("journalVersionType"));
 
 		Object defaultKeys = operand.get("journalDefaultKey");
 		Object tables = operand.get("journalTables");
@@ -144,6 +163,10 @@ public class JournalledJdbcSchema extends JdbcSchema {
 
 	String getSubsequentVersionField() {
 		return subsequentVersionField;
+	}
+
+	VersionType getVersionType() {
+		return versionType;
 	}
 
 	@Override

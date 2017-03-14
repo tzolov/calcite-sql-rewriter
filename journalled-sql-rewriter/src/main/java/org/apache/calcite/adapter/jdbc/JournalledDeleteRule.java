@@ -34,10 +34,21 @@ public class JournalledDeleteRule extends AbstractForcedRule {
 			columnNames.add(null);
 		}
 
-		// TODO: would be nice if possible to let Version be set to default, and set SubsequentVersion to equal Version
-		// (would allow arbitrary version column types, not tied to timestamp)
-		sources.add(relBuilder.call(SqlStdOperatorTable.CURRENT_TIMESTAMP));
-		sources.add(relBuilder.call(SqlStdOperatorTable.CURRENT_TIMESTAMP));
+		RexNode newVersion;
+		switch(journalTable.getVersionType()) {
+			case TIMESTAMP:
+				// TODO: would be nice if possible to let Version be set to default, and set SubsequentVersion to equal Version
+				// (would allow arbitrary version column types, not tied to timestamp)
+				newVersion = relBuilder.call(SqlStdOperatorTable.CURRENT_TIMESTAMP);
+				break;
+			case BIGINT:
+				newVersion = relBuilder.call(SqlStdOperatorTable.PLUS, relBuilder.field(journalTable.getVersionField()), relBuilder.literal(1));
+				break;
+			default:
+				throw new UnsupportedOperationException();
+		}
+		sources.add(newVersion);
+		sources.add(newVersion);
 		columnNames.add(journalTable.getVersionField());
 		columnNames.add(journalTable.getSubsequentVersionField());
 

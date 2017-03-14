@@ -4,21 +4,42 @@ import org.apache.calcite.runtime.Hook;
 import org.apache.calcite.test.CalciteAssert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+@RunWith(Parameterized.class)
 public class SelectIntegrationTest {
 	private static final String virtualSchemaName = "hr";
 	private static final String actualSchemaName = "calcite_sql_rewriter_integration_test";
+	private final JournalledJdbcSchema.VersionType versionType;
+
+	@Parameterized.Parameters(name = "{index}: {0}")
+	public static Collection<Object[]> data() {
+		List<Object[]> result = new ArrayList<>();
+		for(JournalledJdbcSchema.VersionType vt : JournalledJdbcSchema.VersionType.values()) {
+			result.add(new Object[] {vt});
+		}
+		return result;
+	}
 
 	@BeforeClass
-	public static void rebuildTestDatabase() throws Exception {
-		TargetDatabase.rebuild();
+	public static void avoidGlobals() throws Exception {
 		JournalledJdbcSchema.Factory.INSTANCE.setAutomaticallyAddRules(false);
+	}
+
+	public SelectIntegrationTest(JournalledJdbcSchema.VersionType versionType) throws Exception {
+		this.versionType = versionType;
+		TargetDatabase.rebuild(versionType);
 	}
 
 	@Test
 	public void testRewriting() {
 		CalciteAssert
-				.model(TargetDatabase.JOURNALLED_MODEL)
+				.model(TargetDatabase.makeJournalledModel(versionType))
 				.query("SELECT \"empid\" FROM \"" + virtualSchemaName + "\".\"emps\"")
 				.withHook(Hook.PROGRAM, JournalledJdbcRuleManager.program())
 				.explainContains("PLAN=JdbcToEnumerableConverter\n" +
@@ -40,7 +61,7 @@ public class SelectIntegrationTest {
 	@Test
 	public void testAllColumns() {
 		CalciteAssert
-				.model(TargetDatabase.JOURNALLED_MODEL)
+				.model(TargetDatabase.makeJournalledModel(versionType))
 				.query("SELECT * FROM \"" + virtualSchemaName + "\".\"emps\"")
 				.withHook(Hook.PROGRAM, JournalledJdbcRuleManager.program())
 				.returns("empid=1; deptno=2; first_name=Peter; last_name=Pan\n" +
@@ -53,7 +74,7 @@ public class SelectIntegrationTest {
 	@Test
 	public void testComplexRewriting() {
 		CalciteAssert
-				.model(TargetDatabase.JOURNALLED_MODEL)
+				.model(TargetDatabase.makeJournalledModel(versionType))
 				.query("SELECT \"d\".\"deptno\"\n" +
 						"FROM \"" + virtualSchemaName + "\".\"emps\" AS \"e\"\n" +
 						"JOIN \"" + virtualSchemaName + "\".\"depts\" AS \"d\" ON \"e\".\"deptno\" = \"d\".\"deptno\"\n" +
@@ -66,7 +87,7 @@ public class SelectIntegrationTest {
 	@Test
 	public void testNonJournalled() {
 		CalciteAssert
-				.model(TargetDatabase.JOURNALLED_MODEL)
+				.model(TargetDatabase.makeJournalledModel(versionType))
 				.query("SELECT * FROM \"" + virtualSchemaName + "\".\"non_journalled\"")
 				.withHook(Hook.PROGRAM, JournalledJdbcRuleManager.program())
 				.explainContains("JdbcToEnumerableConverter\n" +

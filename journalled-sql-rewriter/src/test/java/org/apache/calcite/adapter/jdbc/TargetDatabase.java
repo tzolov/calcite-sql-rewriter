@@ -14,7 +14,7 @@ class TargetDatabase {
 	private static final String DB_USER = System.getProperty("user.name");
 	private static final String DB_PASS = "";
 
-	static final String JOURNALLED_MODEL = "{\n"
+	static final String JOURNALLED_MODEL_TEMPLATE = "{\n"
 			+ "  \"version\": \"1.0\",\n"
 			+ "  \"defaultSchema\": \"dontrelyonme\",\n"
 			+ "   schemas: [\n"
@@ -31,6 +31,7 @@ class TargetDatabase {
 			+ "         \"journalSuffix\": \"_journal\",\n"
 			+ "         \"journalVersionField\": \"version_number\",\n"
 			+ "         \"journalSubsequentVersionField\": \"subsequent_version_number\",\n"
+			+ "         \"journalVersionType\": \"{VERSION_TYPE}\",\n"
 			+ "         \"journalDefaultKey\": [\"id\"],\n"
 			+ "         \"journalTables\": {\n"
 			+ "           \"emps\": [\"empid\"],\n"
@@ -51,6 +52,7 @@ class TargetDatabase {
 			+ "         \"journalSuffix\": \"_journal\",\n"
 			+ "         \"journalVersionField\": \"version_number\",\n"
 			+ "         \"journalSubsequentVersionField\": \"subsequent_version_number\",\n"
+			+ "         \"journalVersionType\": \"{VERSION_TYPE}\",\n"
 			+ "         \"journalDefaultKey\": [\"id\"],\n"
 			+ "         \"journalTables\": {\n"
 			+ "           \"emps\": [\"empid\"],\n"
@@ -61,7 +63,11 @@ class TargetDatabase {
 			+ "   ]\n"
 			+ "}";
 
-	static void rebuild() throws Exception {
+	static String makeJournalledModel(JournalledJdbcSchema.VersionType versionType) {
+		return JOURNALLED_MODEL_TEMPLATE.replace("{VERSION_TYPE}", versionType.name());
+	}
+
+	static void rebuild(JournalledJdbcSchema.VersionType type) throws Exception {
 		// Splitting commands at semicolons is hard; let's go delegate!
 		Process cmd = new ProcessBuilder()
 				.command("psql", DB_URL + "?user=" + DB_USER + "&password=" + DB_PASS)
@@ -69,7 +75,16 @@ class TargetDatabase {
 				.redirectError(ProcessBuilder.Redirect.INHERIT)
 				.start();
 		OutputStream outputStream = cmd.getOutputStream();
-		InputStream scriptStream = ClassLoader.getSystemResourceAsStream("TestDB.sql");
+		String resource = null;
+		switch(type) {
+			case TIMESTAMP:
+				resource = "TimestampVersionDB.sql";
+				break;
+			case BIGINT:
+				resource = "BigintVersionDB.sql";
+				break;
+		}
+		InputStream scriptStream = ClassLoader.getSystemResourceAsStream(resource);
 		IOUtils.copy(scriptStream, outputStream);
 		outputStream.close();
 		scriptStream.close();

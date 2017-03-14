@@ -51,6 +51,10 @@ class JournalledJdbcTable extends JdbcTable {
 		return keyColumnNames;
 	}
 
+	JournalledJdbcSchema.VersionType getVersionType() {
+		return journalledJdbcSchema.getVersionType();
+	}
+
 	@Override
 	public RelNode toRel(RelOptTable.ToRelContext context, RelOptTable relOptTable) {
 		JdbcRelBuilder relBuilder = relBuilderFactory.create(
