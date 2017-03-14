@@ -10,7 +10,7 @@
     <parent>
         <groupId>io.pivotal.calcite</groupId>
         <artifactId>sql-rewriter</artifactId>
-        <version>1.1</version>
+        <version>1.2-SNAPSHOT</version>
     </parent>
 
     <artifactId>journalled-sql-rewriter</artifactId>
