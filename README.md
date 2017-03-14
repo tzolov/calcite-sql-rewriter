@@ -124,6 +124,15 @@ So for each `deptno` only the row with higher version_number is returned.
 
 _Note that this project provides just a temporal workaround. Complete solution will be provided with:_ [HAWQ-304](https://issues.apache.org/jira/browse/HAWQ-304) 
 
+### Limitations
+
+When using this project, it is important to be aware of the following limitations:
+
+* Concurrent updates to the same record can lead to data loss. If users A and B both send an update to the same record
+  simultaneously, one of the users changes will be lost, even if they were updating different columns. Similarly, if one
+  user deletes a record while another is updating it, the update may "win", causing the record to not be deleted.
+* Unique indexes cannot be defined. Similarly, UPSERT (`ON CONFLICT UPDATE`) is not supported.
+
 ### References
 * [HAWQ-304](https://issues.apache.org/jira/browse/HAWQ-304) Support update and delete on non-heap tables
 * [HIVE-5317](https://issues.apache.org/jira/browse/HIVE-5317) Implement insert, update, and delete in Hive with full ACID support
