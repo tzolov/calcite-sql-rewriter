@@ -1,5 +1,7 @@
 package org.apache.calcite.adapter.jdbc;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.util.Collection;
@@ -9,6 +11,8 @@ import java.util.Set;
 
 import javax.sql.DataSource;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.calcite.avatica.AvaticaUtils;
 import org.apache.calcite.linq4j.tree.Expression;
 import org.apache.calcite.rel.type.RelDataType;
@@ -77,6 +81,33 @@ public class JournalledJdbcSchema extends JdbcSchema {
 		}
 	}
 
+	private static DataSource parseDataSource(Map<String, Object> operand) throws IOException {
+		final String connection = (String) operand.get("connection");
+
+		Map<String, Object> jdbcConfig;
+		if (connection != null) {
+			try (InputStream connConfig = ClassLoader.getSystemResourceAsStream(connection)) {
+				jdbcConfig = new ObjectMapper().readValue(
+						connConfig,
+						new TypeReference<Map<String, Object>>(){}
+				);
+			}
+		} else {
+			jdbcConfig = operand;
+		}
+
+		final String dataSourceName = (String) jdbcConfig.get("dataSource");
+		if (dataSourceName != null) {
+			return AvaticaUtils.instantiatePlugin(DataSource.class, dataSourceName);
+		}
+
+		final String jdbcUrl = (String) jdbcConfig.get("jdbcUrl");
+		final String jdbcDriver = (String) jdbcConfig.get("jdbcDriver");
+		final String jdbcUser = (String) jdbcConfig.get("jdbcUser");
+		final String jdbcPassword = (String) jdbcConfig.get("jdbcPassword");
+		return dataSource(jdbcUrl, jdbcDriver, jdbcUser, jdbcPassword);
+	}
+
 	// Copied from JdbcSchema with modifications
 	public static JournalledJdbcSchema create(
 			SchemaPlus parentSchema,
@@ -85,16 +116,7 @@ public class JournalledJdbcSchema extends JdbcSchema {
 	) {
 		DataSource dataSource;
 		try {
-			final String dataSourceName = (String) operand.get("dataSource");
-			if (dataSourceName != null) {
-				dataSource = AvaticaUtils.instantiatePlugin(DataSource.class, dataSourceName);
-			} else {
-				final String jdbcUrl = (String) operand.get("jdbcUrl");
-				final String jdbcDriver = (String) operand.get("jdbcDriver");
-				final String jdbcUser = (String) operand.get("jdbcUser");
-				final String jdbcPassword = (String) operand.get("jdbcPassword");
-				dataSource = dataSource(jdbcUrl, jdbcDriver, jdbcUser, jdbcPassword);
-			}
+			dataSource = parseDataSource(operand);
 		} catch (Exception e) {
 			throw new RuntimeException("Error while reading dataSource", e);
 		}
