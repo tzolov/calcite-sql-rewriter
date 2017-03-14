@@ -106,24 +106,25 @@ SELECT * FROM hr.depts;
 ```
 is converted into this `SELECT` statement:
 ```sql
-WITH link_last AS (
-    SELECT
-      *,
-      MAX(version_number) OVER (PARTITION BY deptno) AS last_version_number
-    FROM hr.depts_journal
-)
 SELECT
   deptno,
   department_name
-FROM link_last
-WHERE subsequent_version_number IS NULL
-      AND version_number = last_version_number;
+FROM (
+  SELECT *, MAX(version_number) OVER (PARTITION BY deptno) AS last_version_number
+  FROM hr.depts_journal
+) AS link_last
+WHERE subsequent_version_number IS NULL AND version_number = last_version_number;
 ```
-So for each `deptno` only the row with higher version_number is returned.
+So for each unique `deptno` only the row with the higher `version_number` is returned. 
+
+The `MAX(version_number) OVER (PARTITION BY deptno)`  
+[window function](https://www.postgresql.org/docs/9.6/static/tutorial-window.html) computes the 
+max `version_number` per `deptno`.
 
 ---
-
 _Note that this project provides just a temporal workaround. Complete solution will be provided with:_ [HAWQ-304](https://issues.apache.org/jira/browse/HAWQ-304)
+
+---
 
 ### Limitations
 
