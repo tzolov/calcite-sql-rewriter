@@ -4,10 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import javax.sql.DataSource;
 
@@ -38,6 +35,23 @@ public class JournalledJdbcSchema extends JdbcSchema {
 	private final String subsequentVersionField;
 	private ImmutableMap<String, JdbcTable> tableMap;
 
+	private void addTable(String name, Object keys) {
+		String[] parsedKeys;
+		if (keys instanceof String) {
+			parsedKeys = new String[]{(String) keys};
+		} else if (keys instanceof Collection) {
+			parsedKeys = new String[((Collection<?>) keys).size()];
+			int i = 0;
+			for (Object key : (Collection<?>) keys) {
+				parsedKeys[i] = (String) key;
+				i++;
+			}
+		} else {
+			throw new IllegalArgumentException("No primary key given for table: " + name);
+		}
+		journalledTableKeys.put(name, parsedKeys);
+	}
+
 	private JournalledJdbcSchema(
 			DataSource dataSource,
 			SqlDialect dialect,
@@ -63,21 +77,14 @@ public class JournalledJdbcSchema extends JdbcSchema {
 				if (keys == null) {
 					keys = defaultKeys;
 				}
-				String[] parsedKeys;
-				if (keys instanceof String) {
-					parsedKeys = new String[]{(String) keys};
-				} else if (keys instanceof Collection) {
-					parsedKeys = new String[((Collection<?>) keys).size()];
-					int i = 0;
-					for (Object key : (Collection<?>) keys) {
-						parsedKeys[i] = (String) key;
-						i++;
-					}
-				} else {
-					throw new IllegalArgumentException("No primary key given for table: " + name);
-				}
-				journalledTableKeys.put(name, parsedKeys);
+				addTable(name, keys);
 			}
+		} else if (tables instanceof List) {
+			for (Object name : (List<?>) tables) {
+				addTable((String) name, defaultKeys);
+			}
+		} else {
+			throw new IllegalArgumentException("journalTables entry is invalid or missing");
 		}
 	}
 
