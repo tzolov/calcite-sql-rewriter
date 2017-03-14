@@ -11,6 +11,7 @@ import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.logical.LogicalTableModify;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.util.Pair;
 
 public class JournalledUpdateRule extends AbstractForcedRule {
@@ -51,6 +52,19 @@ public class JournalledUpdateRule extends AbstractForcedRule {
 		);
 
 		relBuilder.push(project.getInput());
+
+		switch(journalTable.getVersionType()) {
+			case TIMESTAMP:
+				break;
+			case BIGINT:
+				RexNode newVersion = relBuilder.call(SqlStdOperatorTable.PLUS, relBuilder.field(journalTable.getVersionField()), relBuilder.literal(1));
+				desiredFields.add(newVersion);
+				desiredNames.add(journalTable.getVersionField());
+				break;
+			default:
+				throw new UnsupportedOperationException();
+		}
+
 		relBuilder.project(desiredFields, desiredNames);
 
 		// Convert the UPDATE into INSERT TableModify operations
