@@ -26,6 +26,8 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.19.1</version>
                 <configuration>
+                    <parallel>methods</parallel>
+                    <threadCount>4</threadCount>
                     <systemPropertyVariables>
                         <calcite.test.db>postgresql</calcite.test.db>
                     </systemPropertyVariables>
