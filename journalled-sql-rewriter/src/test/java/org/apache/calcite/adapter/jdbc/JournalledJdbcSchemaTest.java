@@ -78,6 +78,8 @@ public class JournalledJdbcSchemaTest {
 			Assert.assertTrue(holder.get() instanceof SequenceProgram);
 			Assert.assertTrue(((SequenceProgram) holder.get()).getPrograms().get(0) instanceof ForcedRulesProgram);
 		} finally {
+			// ensure no gap where another hook may be added
+			JournalledJdbcSchema.Factory.INSTANCE.setAutomaticallyAddRules(false);
 			JournalledJdbcRuleManager.removeHook();
 		}
 	}

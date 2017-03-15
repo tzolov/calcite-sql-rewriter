@@ -2,18 +2,11 @@ package org.apache.calcite.adapter.jdbc;
 
 import org.apache.calcite.runtime.Hook;
 import org.apache.calcite.test.CalciteAssert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class UpdateTimestampIntegrationTest {
-	private static final String virtualSchemaName = "calcite_sql_rewriter_integration_test"; // Should be "hr" - see TargetDatabase.java
-	private static final String actualSchemaName = "calcite_sql_rewriter_integration_test";
-	private static final JournalVersionType versionType = JournalVersionType.TIMESTAMP;
-
-	@BeforeClass
-	public static void rebuildTestDatabase() throws Exception {
-		TargetDatabase.rebuild(versionType);
-		JournalledJdbcSchema.Factory.INSTANCE.setAutomaticallyAddRules(false);
+public class UpdateTimestampIntegrationTest extends IntegrationBase {
+	public UpdateTimestampIntegrationTest() {
+		super(JournalVersionType.TIMESTAMP, true);
 	}
 
 	@Test

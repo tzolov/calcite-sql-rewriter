@@ -21,6 +21,18 @@ class TargetDatabase {
 	private static final String DB_USER = System.getProperty("user.name");
 	private static final String DB_PASS = "";
 
+	static {
+		// Run before any tests, but only need to run once
+
+		try {
+			for(JournalVersionType versionType : JournalVersionType.values()) {
+				rebuild(versionType);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
 	@SuppressWarnings("unused") // Used by the model JSON
 	public static class IsolatedDataSource implements DataSource {
 		public static final DataSource INSTANCE = new IsolatedDataSource();
@@ -85,16 +97,16 @@ class TargetDatabase {
 			+ "  \"defaultSchema\": \"dontrelyonme\",\n"
 			+ "   schemas: [\n"
 			+ "     {\n"
-			+ "       \"name\": \"hr\",\n"
+			+ "       \"name\": \"${VIRTUAL_SCHEMA}\",\n"
 			+ "       \"type\": \"custom\",\n"
 			+ "       \"factory\": \"org.apache.calcite.adapter.jdbc.JournalledJdbcSchema$Factory\",\n"
 			+ "       \"operand\": {\n"
 			+ "         \"dataSource\": \"org.apache.calcite.adapter.jdbc.TargetDatabase$IsolatedDataSource\",\n"
-			+ "         \"jdbcSchema\": \"calcite_sql_rewriter_integration_test\",\n"
+			+ "         \"jdbcSchema\": \"${ACTUAL_SCHEMA}\",\n"
 			+ "         \"journalSuffix\": \"_journal\",\n"
 			+ "         \"journalVersionField\": \"version_number\",\n"
 			+ "         \"journalSubsequentVersionField\": \"subsequent_version_number\",\n"
-			+ "         \"journalVersionType\": \"{VERSION_TYPE}\",\n"
+			+ "         \"journalVersionType\": \"${VERSION_TYPE}\",\n"
 			+ "         \"journalDefaultKey\": [\"id\"],\n"
 			+ "         \"journalTables\": {\n"
 			+ "           \"emps\": [\"empid\"],\n"
@@ -102,17 +114,17 @@ class TargetDatabase {
 			+ "         }\n"
 			+ "       }\n"
 			+ "     },\n"
-			+ "     {\n" // This exists to work around a bug in Calcite [https://issues.apache.org/jira/browse/CALCITE-1692]. Once the bug is fixed, the tests using this schema should switch to use hr instead.
-			+ "       \"name\": \"calcite_sql_rewriter_integration_test\",\n"
+			+ "     {\n" // TODO: This exists to work around a bug in Calcite [https://issues.apache.org/jira/browse/CALCITE-1692]. Once the bug is fixed, the tests using this schema should switch to use hr instead.
+			+ "       \"name\": \"${ACTUAL_SCHEMA}\",\n"
 			+ "       \"type\": \"custom\",\n"
 			+ "       \"factory\": \"org.apache.calcite.adapter.jdbc.JournalledJdbcSchema$Factory\",\n"
 			+ "       \"operand\": {\n"
 			+ "         \"dataSource\": \"org.apache.calcite.adapter.jdbc.TargetDatabase$IsolatedDataSource\",\n"
-			+ "         \"jdbcSchema\": \"calcite_sql_rewriter_integration_test\",\n"
+			+ "         \"jdbcSchema\": \"${ACTUAL_SCHEMA}\",\n"
 			+ "         \"journalSuffix\": \"_journal\",\n"
 			+ "         \"journalVersionField\": \"version_number\",\n"
 			+ "         \"journalSubsequentVersionField\": \"subsequent_version_number\",\n"
-			+ "         \"journalVersionType\": \"{VERSION_TYPE}\",\n"
+			+ "         \"journalVersionType\": \"${VERSION_TYPE}\",\n"
 			+ "         \"journalDefaultKey\": [\"id\"],\n"
 			+ "         \"journalTables\": {\n"
 			+ "           \"emps\": [\"empid\"],\n"
@@ -123,11 +135,19 @@ class TargetDatabase {
 			+ "   ]\n"
 			+ "}";
 
-	static String makeJournalledModel(JournalVersionType versionType) {
-		return JOURNALLED_MODEL_TEMPLATE.replace("{VERSION_TYPE}", versionType.name());
+	static String getVirtualSchema(JournalVersionType versionType) {
+		return "hr_" + versionType.toString().toLowerCase();
 	}
 
-	static void rebuild(JournalVersionType type) throws Exception {
+	static String getActualSchema(JournalVersionType versionType) {
+		return "calcite_sql_rewriter_integration_test_" + versionType.toString().toLowerCase();
+	}
+
+	static String makeJournalledModel(JournalVersionType versionType) {
+		return substitute(JOURNALLED_MODEL_TEMPLATE, versionType);
+	}
+
+	private static void rebuild(JournalVersionType versionType) throws Exception {
 		// Splitting commands at semicolons is hard; let's go delegate!
 		Process cmd = new ProcessBuilder()
 				.command("psql", DB_URL + "?user=" + DB_USER + "&password=" + DB_PASS)
@@ -136,7 +156,7 @@ class TargetDatabase {
 				.start();
 		OutputStream outputStream = cmd.getOutputStream();
 		String resource = null;
-		switch(type) {
+		switch(versionType) {
 			case TIMESTAMP:
 				resource = "TimestampVersionDB.sql";
 				break;
@@ -145,12 +165,21 @@ class TargetDatabase {
 				break;
 		}
 		InputStream scriptStream = ClassLoader.getSystemResourceAsStream(resource);
-		IOUtils.copy(scriptStream, outputStream);
-		outputStream.close();
+		InputStream convertedSql = IOUtils.toInputStream(substitute(IOUtils.toString(scriptStream), versionType));
+		IOUtils.copy(convertedSql, outputStream);
 		scriptStream.close();
+		convertedSql.close();
+		outputStream.close();
 		int exitCode = cmd.waitFor();
 		if(exitCode != 0) {
 			throw new IllegalStateException("Failed to build test database. Exit code: " + exitCode);
 		}
+	}
+
+	private static String substitute(String sql, JournalVersionType versionType) {
+		return sql
+				.replace("${VERSION_TYPE}", versionType.name())
+				.replace("${VIRTUAL_SCHEMA}", getVirtualSchema(versionType))
+				.replace("${ACTUAL_SCHEMA}", getActualSchema(versionType));
 	}
 }

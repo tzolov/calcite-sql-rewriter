@@ -2,38 +2,11 @@ package org.apache.calcite.adapter.jdbc;
 
 import org.apache.calcite.runtime.Hook;
 import org.apache.calcite.test.CalciteAssert;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
-@RunWith(Parameterized.class)
-public class InsertIntegrationTest {
-	private static final String virtualSchemaName = "calcite_sql_rewriter_integration_test"; // Should be "hr" - see TargetDatabase.java
-	private static final String actualSchemaName = "calcite_sql_rewriter_integration_test";
-	private final JournalVersionType versionType;
-
-	@Parameterized.Parameters(name = "{index}: {0}")
-	public static Collection<Object[]> data() {
-		List<Object[]> result = new ArrayList<>();
-		for(JournalVersionType vt : JournalVersionType.values()) {
-			result.add(new Object[] {vt});
-		}
-		return result;
-	}
-
-	@BeforeClass
-	public static void avoidGlobals() throws Exception {
-		JournalledJdbcSchema.Factory.INSTANCE.setAutomaticallyAddRules(false);
-	}
-
-	public InsertIntegrationTest(JournalVersionType versionType) throws Exception {
-		this.versionType = versionType;
-		TargetDatabase.rebuild(versionType);
+public class InsertIntegrationTest extends ParameterizedIntegrationBase {
+	public InsertIntegrationTest(JournalVersionType versionType) {
+		super(versionType, true);
 	}
 
 	@Test
