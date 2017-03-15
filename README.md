@@ -235,15 +235,17 @@ computes the max `version_number` per `deptno`.
 
 When using this project, it is important to be aware of the following limitations:
 
-* Concurrent updates to the same record can lead to data loss. If users A and B both send an update to the same record
-  simultaneously, one of the users changes will be lost, even if they were updating different columns. Similarly, if one
-  user deletes a record while another is updating it, the update may &ldquo;win&rdquo;, causing the record to not be
-  deleted.
+* When using `TIMESTAMP` versioning, concurrent updates to the same record can lead to data loss. If users A and B both
+  send an update to the same record simultaneously, one of the users changes will be lost, even if they were updating
+  different columns. Similarly, if one user deletes a record while another is updating it, the update may
+  &ldquo;win&rdquo;, causing the record to not be deleted. For `BIGINT` versioning, one of the users will get a
+  duplicate key error.
 * Unique indexes cannot be defined. Similarly, &ldquo;UPSERT&rdquo; (`ON CONFLICT UPDATE`) is not supported.
 * Table manipulations (DDL) are not supported.
 * Only ANSI SQL syntax can be used. For example, `INSERT`&hellip;`RETURNING` is not supported.
-* Performing `INSERT`, `DELETE`, `INSERT` on the same key when using a `BIGINT` version types will fail unless
-  `version_number` is configured as `SERIAL` (rather than `DEFAULT 1`).
+* Performing `INSERT`s with explicit key values will cause strange behaviour if the key currently or previously existed.
+  (for `BIGINT` versioning it will be rejected if the key ever existed, and for `TIMESTAMP` it will be accepted even
+  if an existing non-deleted record has the same key).
 
 ### References
 * [HAWQ-304](https://issues.apache.org/jira/browse/HAWQ-304) Support update and delete on non-heap tables
