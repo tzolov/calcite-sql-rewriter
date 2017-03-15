@@ -3,26 +3,27 @@ JDBC driver that converts any `INSERT`, `UPDATE` and `DELETE` statements into ap
 updating rows in-place it inserts the new version of the row along with version metadata.
 [ ![Download](https://api.bintray.com/packages/big-data/maven/calcite-sql-rewriter/images/download.svg) ](https://bintray.com/big-data/maven/calcite-sql-rewriter/_latestVersion)
 
-*SQL-on-Hadoop* data management systems such as [Apache HAWQ](http://hawq.incubator.apache.org/) do not offer the
-same style of INSERT, UPDATE, and DELETE that users expect of traditional RDBMS. Unlike transactional
-systems, big-data analytical queries are dominated by SELECT over millions or billions of rows. Analytical
-databases are optimized for this kind of workload. The storage systems are optimized for high throughput scans, and
-commonly implemented as immutable (append-only) persistence stores. No in-place updates are allowed.
+*SQL-on-Hadoop* data management systems such as [Apache HAWQ](http://hawq.incubator.apache.org/) do not offer the same
+style of INSERT, UPDATE, and DELETE that users expect of traditional RDBMS. Unlike transactional systems, big-data
+analytical queries are dominated by SELECT over millions or billions of rows. Analytical databases are optimized for
+this kind of workload. The storage systems are optimized for high throughput scans, and commonly implemented as
+immutable (append-only) persistence stores. No in-place updates are allowed.
 
 The *SQL-on-Hadoop* systems naturally support append-only operations such as `INSERT`. The `UPDATE` or `DELETE` demand
 an alternative approach:
 [HAWQ-304](https://issues.apache.org/jira/browse/HAWQ-304), [HIVE-5317](https://issues.apache.org/jira/browse/HIVE-5317)
 
-This project _emulates_ `INSERT`, `UPDATE` and `DELETE` by turning them into
-append-only `INSERT`s. Instead of updating rows in-place it inserts the new version of the row using two
-additional metadata columns: `version_number` and `subsequent_version_number` of either `TIMESTAMP` or `BIGINT` type.
+This project _emulates_ `INSERT`, `UPDATE` and `DELETE` by turning them into append-only `INSERT`s. Instead of updating
+rows in-place it inserts the new version of the row using two additional metadata columns: `version_number` and
+`subsequent_version_number` of either `TIMESTAMP` or `BIGINT` type.
 
 ---
-_Note that this project can be used as workaround. Complete solution will be provided with:_ [HAWQ-304](https://issues.apache.org/jira/browse/HAWQ-304).
+_Note that this project can be used as workaround. A complete solution will be provided by
+[HAWQ-304](https://issues.apache.org/jira/browse/HAWQ-304)._
 
 ---
 
-### How-to-Use
+### How to Use
 
 ##### Code
 
@@ -48,31 +49,27 @@ To connect to the SQL-Rewrite JDBC driver you need to provide a [model](https://
 Models can be JSON files, or built programmatically. A model is comprised of two group of attributes:
 
 1. Calcite generic attributes, as explained here [model attributes](https://calcite.apache.org/docs/model.html). Note
-  that to use journalling on a schema, the `type` must be `custom` and the `factory` must be
-  `org.apache.calcite.adapter.jdbc.JournalledJdbcSchema$Factory` (see example below).
+   that to use journalling on a schema, the `type` must be `custom` and the `factory` must be
+   `org.apache.calcite.adapter.jdbc.JournalledJdbcSchema$Factory` (see example below).
 1. `sql-rewrite` specific attributes set via the `operand` properties. The table below explains the specific properties.
 
-Note that you must provide *one* of:
+| Property                           | Description | Default |
+| ---------------------------------- |:------------|:--------|
+| `dataSource` <sup>&dagger;</sup>   | Class name to use as the underlying `DataSource` | *none* |
+| `connection` <sup>&dagger;</sup>   | Path to the backend jdbc connection configuration file | *none* |
+| `jdbcDriver` <sup>&dagger;</sup>   | See section below | *none* |
+| `jdbcUrl` <sup>&dagger;</sup>      | See section below | *none* |
+| `jdbcUser` <sup>&dagger;</sup>     | See section below | *none* |
+| `jdbcPassword` <sup>&dagger;</sup> | See section below | *none* |
+| `jdbcSchema`                       | The schema name in the database. Note that due to [CALCITE-1692](https://issues.apache.org/jira/browse/CALCITE-1692) this *must* match the `name` | *none* |
+| `journalSuffix`                    | Journal table suffix | `_journal` |
+| `journalVersionField`              | Journal table version number column name | `version_number` |
+| `journalSubsequentVersionField`    | Journal table delete flag column name | `subsequent_version_number` |
+| `journalVersionType`               | The type of the version columns. Either `TIMESTAMP` or `BIGINT` | `TIMESTAMP` |
+| `journalDefaultKey`                | List of columns to use as primary keys by default (applies when tables do not have an explicit list given in `journalTables`) | *none* |
+| `journalTables`                    | List of journalled tables to be managed. Expressions involving other tables will pass-through unchanged.<br />This can be a list of table names, or a map of table names to primary key columns. | *none* |
 
-* `dataSource`;
-* `connection`;
-* or `jdbcDriver` &amp; `jdbcUrl`.
-
-| Property                        | Description | Default |
-| ------------------------------- |:------------|:--------|
-| `dataSource`                    | Class name to use as the underlying `DataSource`<br />(provide this *or* `connection` *or* `jdbcDriver` &amp; `jdbcUrl`) | *none* |
-| `connection`                    | Path to the backend jdbc connection configuration file<br />(provide this *or* `dataSource` *or* `jdbcDriver` &amp; `jdbcUrl`) | *none* |
-| `jdbcDriver`                    | See section below | *none* |
-| `jdbcUrl`                       | See section below | *none* |
-| `jdbcUser`                      | See section below | *none* |
-| `jdbcPassword`                  | See section below | *none* |
-| `jdbcSchema`                    | The schema name in the database. Note that due to [CALCITE-1692](https://issues.apache.org/jira/browse/CALCITE-1692) this *must* match the `name` | *none* |
-| `journalSuffix`                 | Journal table suffix | `_journal` |
-| `journalVersionField`           | Journal table version number column name | `version_number` |
-| `journalSubsequentVersionField` | Journal table delete flag column name | `subsequent_version_number` |
-| `journalVersionType`            | The type of the version columns. Either `TIMESTAMP` or `BIGINT` | `TIMESTAMP` |
-| `journalDefaultKey`             | List of columns to use as primary keys by default (applies when tables do not have an explicit list given in `journalTables`) | *none* |
-| `journalTables`                 | List of journalled tables to be managed. Expressions involving other tables will pass-through unchanged.<br />This can be a list of table names, or a map of table names to primary key columns. | *none* |
+<sup>&dagger;</sup>: Provide *one* of: `dataSource` *or* `connection` *or* `jdbcDriver` &amp; `jdbcUrl`.
 
 For example:
 
@@ -109,12 +106,12 @@ Backend DB connection configuration can be provided inside `model.json`, or in a
 
 The connection configuration contains the common JDBC connection properties like driver, jdbc URL, and credentials.
 
-| Property Name   | Description                                                        |
-| --------------- |:-------------------------------------------------------------------|
-| `jdbcDriver`    | JDBC driver Class name. For example: `org.postgresql.Driver`       |
-| `jdbcUrl`       | JDBC URL. For example: `jdbc:postgresql://localhost:5432/postgres` |
-| `jdbcUser`      | The database user on whose behalf the connection is being made.    |
-| `jdbcPassword`  | The database user's password.                                      |
+| Property        | Description                                                        | Default |
+| --------------- |:-------------------------------------------------------------------|:--------|
+| `jdbcDriver`    | JDBC driver Class name. For example: `org.postgresql.Driver`       | *none*  |
+| `jdbcUrl`       | JDBC URL. For example: `jdbc:postgresql://localhost:5432/postgres` | *none*  |
+| `jdbcUser`      | The database user on whose behalf the connection is being made.    | *blank* |
+| `jdbcPassword`  | The database user's password.                                      | *blank* |
 
 For example:
 
@@ -127,12 +124,12 @@ For example:
 }
 ```
 
-### How It Works
+### How it Works
 
 `sql-rewrite` leverages [Apache Calcite](https://calcite.apache.org/) to implement a JDBC adapter between the end-users
 and the backend *SQL-on-Hadoop* system. It exposes a fully-fledged JDBC interface to the end-users while internally
-converts the incoming `INSERT`, `UPDATE` and `DELETE` into append-only `INSERT`s and forwards later to
-the backend DB (aka [Apache HAWQ](http://hawq.incubator.apache.org/) ).
+converts the incoming `INSERT`, `UPDATE` and `DELETE` into append-only `INSERT`s and forwards later to the backend DB
+(e.g. [Apache HAWQ](http://hawq.incubator.apache.org/)).
 
 Lets have a Department table called `depts`, with `deptno` (key) and `department_name` columns:
 ```sql
@@ -142,9 +139,9 @@ CREATE TABLE hr.depts (
   PRIMARY KEY (deptno)
 );
 ```
-The `sql-rewrite` convention requires you to create a corresponding journal table named
-`<your-table-name>_journal`, with the same schema as the original table plus two metadata columns: `version_number`
-and `subsequent_version_number` of `TIMESTAMP` or `BIGINT` type.  The column order does not matter.
+The `sql-rewrite` convention requires you to create a corresponding journal table named `<your-table-name>_journal`,
+with the same schema as the original table plus two metadata columns: `version_number` and `subsequent_version_number`
+of `TIMESTAMP` or `BIGINT` type.  The column order does not matter.
 ```sql
 CREATE TABLE hr.depts_journal (
   deptno                    SERIAL                   NOT NULL,
@@ -154,10 +151,13 @@ CREATE TABLE hr.depts_journal (
   PRIMARY KEY (deptno, version_number)
 );
 ```
-* `version_number` - version when the row that was inserted. An increasing number, the highest value represents the current row state.
-* `subsequent_version_number` - marks deleted rows and can be populated on older records by background archival tasks.
+* `version_number` &mdash; version when the row that was inserted. An increasing number, the highest value represents
+  the current row state.
+* `subsequent_version_number` &mdash; denotes the next version of the record. Since existing records cannot be updated,
+  this will usually be NULL (the exception being deleted records, where this is set to match the `version_number`).
+  Also background archival tasks can populate this for older records as an optimisation.
 
-Note that the new key is composed of the original key(s) `deptno` and the `version_number`!
+Note that the new key is composed of the original key(s) (in this example `deptno`) and the `version_number`!
 
 Below are few sample `INSERT`, `UPDATE`, `DELETE` and `SELECT` statements and their internal representation.
 
