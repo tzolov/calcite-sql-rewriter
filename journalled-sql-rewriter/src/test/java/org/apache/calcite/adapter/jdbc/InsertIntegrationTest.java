@@ -2,7 +2,6 @@ package org.apache.calcite.adapter.jdbc;
 
 import org.apache.calcite.runtime.Hook;
 import org.apache.calcite.test.CalciteAssert;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -34,10 +33,6 @@ public class InsertIntegrationTest {
 
 	public InsertIntegrationTest(JournalVersionType versionType) throws Exception {
 		this.versionType = versionType;
-	}
-
-	@Before // TODO: find out how to make CalciteAssert run in a transaction then move this to the constructor
-	public void rebuildTestDatabase() throws Exception {
 		TargetDatabase.rebuild(versionType);
 	}
 

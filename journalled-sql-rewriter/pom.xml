@@ -3,7 +3,6 @@
     <modelVersion>4.0.0</modelVersion>
 
     <properties>
-        <postgresql.version>9.4-1200-jdbc41</postgresql.version>
         <calcite.version>1.11.0</calcite.version>
     </properties>
 
@@ -45,7 +44,7 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>${postgresql.version}</version>
+            <version>9.4.1212.jre7</version>
             <scope>test</scope>
         </dependency>
 

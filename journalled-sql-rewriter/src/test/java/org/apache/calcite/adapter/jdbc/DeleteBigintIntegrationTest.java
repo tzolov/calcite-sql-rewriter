@@ -2,16 +2,16 @@ package org.apache.calcite.adapter.jdbc;
 
 import org.apache.calcite.runtime.Hook;
 import org.apache.calcite.test.CalciteAssert;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class DeleteBigintIntegrationTest {
 	private static final String virtualSchemaName = "calcite_sql_rewriter_integration_test"; // Should be "hr" - see TargetDatabase.java
 	private static final String actualSchemaName = "calcite_sql_rewriter_integration_test";
-	private final JournalVersionType versionType = JournalVersionType.BIGINT;
+	private static final JournalVersionType versionType = JournalVersionType.BIGINT;
 
-	@Before // TODO: find out how to make CalciteAssert run in a transaction then change this to BeforeClass
-	public void rebuildTestDatabase() throws Exception {
+	@BeforeClass
+	public static void rebuildTestDatabase() throws Exception {
 		TargetDatabase.rebuild(versionType);
 		JournalledJdbcSchema.Factory.INSTANCE.setAutomaticallyAddRules(false);
 	}
