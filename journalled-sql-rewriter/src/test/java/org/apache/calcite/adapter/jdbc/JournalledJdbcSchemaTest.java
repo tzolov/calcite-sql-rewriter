@@ -107,6 +107,27 @@ public class JournalledJdbcSchemaTest {
 	}
 
 	@Test
+	public void testDefaultVersionField() {
+		options.remove("journalVersionField");
+		JournalledJdbcSchema schema = makeSchema();
+		Assert.assertEquals(schema.getVersionField(), "version_number");
+	}
+
+	@Test
+	public void testDefaultSubsequentVersionField() {
+		options.remove("journalSubsequentVersionField");
+		JournalledJdbcSchema schema = makeSchema();
+		Assert.assertEquals(schema.getSubsequentVersionField(), "subsequent_version_number");
+	}
+
+	@Test
+	public void testDefaultJournalSuffix() {
+		options.remove("journalSuffix");
+		JournalledJdbcSchema schema = makeSchema();
+		Assert.assertEquals(schema.journalNameFor("foo"), "foo_journal");
+	}
+
+	@Test
 	public void testDefaultsToTimestampVersioning() {
 		JournalledJdbcSchema schema = makeSchema();
 		Assert.assertEquals(schema.getVersionType(), JournalVersionType.TIMESTAMP);

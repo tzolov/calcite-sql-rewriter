@@ -37,11 +37,8 @@ public class JournalledJdbcSchema extends JdbcSchema {
 	private ImmutableMap<String, JdbcTable> tableMap;
 
 	private static JournalVersionType getVersionType(String name) {
-		if (name == null) {
-			return JournalVersionType.TIMESTAMP;
-		}
 		for (JournalVersionType v : JournalVersionType.values()) {
-			if (name.equalsIgnoreCase(v.name())) {
+			if (v.name().equalsIgnoreCase(name)) {
 				return v;
 			}
 		}
@@ -77,10 +74,10 @@ public class JournalledJdbcSchema extends JdbcSchema {
 
 		tableMap = null;
 		journalledTableKeys = new HashMap<>();
-		journalSuffix = (String) operand.get("journalSuffix");
-		versionField = (String) operand.get("journalVersionField");
-		subsequentVersionField = (String) operand.get("journalSubsequentVersionField");
-		versionType = getVersionType((String) operand.get("journalVersionType"));
+		journalSuffix = (String) operand.getOrDefault("journalSuffix", "_journal");
+		versionField = (String) operand.getOrDefault("journalVersionField", "version_number");
+		subsequentVersionField = (String) operand.getOrDefault("journalSubsequentVersionField", "subsequent_version_number");
+		versionType = getVersionType((String) operand.getOrDefault("journalVersionType", JournalVersionType.TIMESTAMP.toString()));
 
 		Object defaultKeys = operand.get("journalDefaultKey");
 		Object tables = operand.get("journalTables");
@@ -246,7 +243,7 @@ public class JournalledJdbcSchema extends JdbcSchema {
 		return tables;
 	}
 
-	private String journalNameFor(String virtualName) {
+	String journalNameFor(String virtualName) {
 		return virtualName + journalSuffix;
 	}
 
