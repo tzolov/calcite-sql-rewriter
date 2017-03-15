@@ -3,9 +3,8 @@ package org.apache.calcite.adapter.jdbc;
 import org.apache.calcite.runtime.Hook;
 import org.apache.calcite.test.CalciteAssert;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
-
-import java.sql.SQLException;
 
 public class InsertIntegrationTest extends ParameterizedIntegrationBase {
 	public InsertIntegrationTest(JournalVersionType versionType) {
@@ -40,6 +39,7 @@ public class InsertIntegrationTest extends ParameterizedIntegrationBase {
 
 	@Test
 	public void testRejectsConflictingID() {
+		Assume.assumeTrue("Unique ID enforcement not currently supported for TIMESTAMP", versionType != JournalVersionType.TIMESTAMP);
 		try {
 			CalciteAssert
 					.model(TargetDatabase.makeJournalledModel(versionType))
@@ -66,6 +66,7 @@ public class InsertIntegrationTest extends ParameterizedIntegrationBase {
 
 	@Test
 	public void testAllowsPreviouslyDeletedID() {
+		Assume.assumeTrue("Re-use of deleted IDs not currently supported for BIGINT", versionType != JournalVersionType.BIGINT);
 		CalciteAssert
 				.model(TargetDatabase.makeJournalledModel(versionType))
 				.query("INSERT INTO \"" + virtualSchemaName + "\".\"emps\" (\"empid\", \"deptno\", \"last_name\") VALUES (5, 1, 'Me')")
