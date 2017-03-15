@@ -111,7 +111,7 @@ The connection configuration contains the common JDBC connection properties like
 | `jdbcDriver`    | JDBC driver Class name. For example: `org.postgresql.Driver`       | *none*  |
 | `jdbcUrl`       | JDBC URL. For example: `jdbc:postgresql://localhost:5432/postgres` | *none*  |
 | `jdbcUser`      | The database user on whose behalf the connection is being made.    | *blank* |
-| `jdbcPassword`  | The database user's password.                                      | *blank* |
+| `jdbcPassword`  | The database user&rsquo;s password.                                | *blank* |
 
 For example:
 
@@ -226,7 +226,7 @@ FROM (
 ) AS link_last
 WHERE subsequent_version_number IS NULL AND version_number = last_version_number;
 ```
-For every `deptno` only the row with the highest`version_number` is returned.
+For every `deptno` only the row with the highest `version_number` is returned.
 
 The `MAX(version_number) OVER (PARTITION BY deptno)` [window function](https://www.postgresql.org/docs/9.6/static/tutorial-window.html)
 computes the max `version_number` per `deptno`.
@@ -237,8 +237,9 @@ When using this project, it is important to be aware of the following limitation
 
 * Concurrent updates to the same record can lead to data loss. If users A and B both send an update to the same record
   simultaneously, one of the users changes will be lost, even if they were updating different columns. Similarly, if one
-  user deletes a record while another is updating it, the update may "win", causing the record to not be deleted.
-* Unique indexes cannot be defined. Similarly, UPSERT (`ON CONFLICT UPDATE`) is not supported.
+  user deletes a record while another is updating it, the update may &ldquo;win&rdquo;, causing the record to not be
+  deleted.
+* Unique indexes cannot be defined. Similarly, &ldquo;UPSERT&rdquo; (`ON CONFLICT UPDATE`) is not supported.
 * Table manipulations (DDL) are not supported.
 
 ### References
