@@ -47,7 +47,9 @@ public class Main {
 To connect to the SQL-Rewrite JDBC driver you need to provide a [model](https://calcite.apache.org/docs/model.html).
 Models can be JSON files, or built programmatically. A model is comprised of two group of attributes:
 
-1. Calcite generic attributes, as explained here [model attributes](https://calcite.apache.org/docs/model.html)
+1. Calcite generic attributes, as explained here [model attributes](https://calcite.apache.org/docs/model.html). Note
+  that to use journalling on a schema, the `type` must be `custom` and the `factory` must be
+  `org.apache.calcite.adapter.jdbc.JournalledJdbcSchema$Factory` (see example below).
 1. `sql-rewrite` specific attributes set via the `operand` properties. The table below explains the specific properties.
 
 Note that you must provide *one* of:
