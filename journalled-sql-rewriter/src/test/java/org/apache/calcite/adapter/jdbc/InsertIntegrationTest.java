@@ -2,7 +2,10 @@ package org.apache.calcite.adapter.jdbc;
 
 import org.apache.calcite.runtime.Hook;
 import org.apache.calcite.test.CalciteAssert;
+import org.junit.Assert;
 import org.junit.Test;
+
+import java.sql.SQLException;
 
 public class InsertIntegrationTest extends ParameterizedIntegrationBase {
 	public InsertIntegrationTest(JournalVersionType versionType) {
@@ -33,6 +36,41 @@ public class InsertIntegrationTest extends ParameterizedIntegrationBase {
 						"    JdbcValues(tuples=[[{ 696, 'Pivotal' }]])\n")
 				.planUpdateHasSql("INSERT INTO \"" + actualSchemaName + "\".\"depts_journal\" (\"deptno\", \"department_name\")\n" +
 						"VALUES  (696, 'Pivotal')", 1);
+	}
+
+	@Test
+	public void testRejectsConflictingID() {
+		try {
+			CalciteAssert
+					.model(TargetDatabase.makeJournalledModel(versionType))
+					.query("INSERT INTO \"" + virtualSchemaName + "\".\"emps\" (\"empid\", \"deptno\", \"last_name\") VALUES (2, 1, 'Me')")
+					.withHook(Hook.PROGRAM, JournalledJdbcRuleManager.program())
+					.updates(0);
+			Assert.fail("Expected duplicate key exception");
+		} catch(RuntimeException e) {
+			// Look for an error about "duplicate key" and consider it a success. For everything else, it's a fail.
+			boolean foundDuplicateError = false;
+			Throwable ex = e;
+			while (ex != null) {
+				if (ex.getMessage().contains("duplicate key")) {
+					foundDuplicateError = true;
+					break;
+				}
+				ex = ex.getCause();
+			}
+			if (!foundDuplicateError) {
+				throw e;
+			}
+		}
+	}
+
+	@Test
+	public void testAllowsPreviouslyDeletedID() {
+		CalciteAssert
+				.model(TargetDatabase.makeJournalledModel(versionType))
+				.query("INSERT INTO \"" + virtualSchemaName + "\".\"emps\" (\"empid\", \"deptno\", \"last_name\") VALUES (5, 1, 'Me')")
+				.withHook(Hook.PROGRAM, JournalledJdbcRuleManager.program())
+				.updates(1);
 	}
 
 	@Test
