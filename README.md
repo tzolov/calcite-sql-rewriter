@@ -241,6 +241,9 @@ When using this project, it is important to be aware of the following limitation
   deleted.
 * Unique indexes cannot be defined. Similarly, &ldquo;UPSERT&rdquo; (`ON CONFLICT UPDATE`) is not supported.
 * Table manipulations (DDL) are not supported.
+* Only ANSI SQL syntax can be used. For example, `INSERT`&hellip;`RETURNING` is not supported.
+* Performing `INSERT`, `DELETE`, `INSERT` on the same key when using a `BIGINT` version types will fail unless
+  `version_number` is configured as `SERIAL` (rather than `DEFAULT 1`).
 
 ### References
 * [HAWQ-304](https://issues.apache.org/jira/browse/HAWQ-304) Support update and delete on non-heap tables
