@@ -250,7 +250,7 @@ public class JournalledJdbcSchema extends JdbcSchema {
 		return virtualName + journalSuffix;
 	}
 
-	@SuppressWarnings("unused") // Used by .json configuration
+	@SuppressWarnings({"unused", "WeakerAccess"}) // Used by .json configuration
 	public static class Factory implements SchemaFactory {
 		public static final Factory INSTANCE = new Factory();
 

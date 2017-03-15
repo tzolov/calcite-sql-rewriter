@@ -38,7 +38,7 @@ public class JournalledUpdateRule extends AbstractForcedRule {
 		for (Pair<RexNode, String> field : project.getNamedProjects()) {
 			if (field.getKey() instanceof RexInputRef) {
 				int index = tableModify.getUpdateColumnList().indexOf(field.getValue());
-				if (index >= 0) {
+				if (index != -1) {
 					desiredFields.add(tableModify.getSourceExpressionList().get(index));
 				}
 				else {

@@ -9,6 +9,7 @@ import org.apache.calcite.tools.Program;
 import org.apache.calcite.util.Holder;
 import org.apache.calcite.util.Pair;
 
+@SuppressWarnings("WeakerAccess") // Part of API
 public class JournalledJdbcRuleManager {
 	private static final Program PROGRAM = new ForcedRulesProgram(new JdbcRelBuilder.FactoryFactory(),
 			new JournalledInsertRule(),

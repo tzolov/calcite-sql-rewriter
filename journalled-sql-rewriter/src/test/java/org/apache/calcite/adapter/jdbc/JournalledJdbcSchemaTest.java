@@ -2,12 +2,19 @@ package org.apache.calcite.adapter.jdbc;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import org.apache.calcite.adapter.jdbc.programs.ForcedRulesProgram;
+import org.apache.calcite.adapter.jdbc.programs.SequenceProgram;
+import org.apache.calcite.runtime.Hook;
 import org.apache.calcite.schema.Schema;
 import org.apache.calcite.schema.Table;
+import org.apache.calcite.tools.Program;
+import org.apache.calcite.util.Holder;
+import org.apache.calcite.util.Pair;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -56,6 +63,23 @@ public class JournalledJdbcSchemaTest {
 
 		Assert.assertEquals(journalledSchema.getVersionField(), "myvfield");
 		Assert.assertEquals(journalledSchema.getSubsequentVersionField(), "mysvfield");
+	}
+
+	@Test
+	public void testFactoryWillAutomaticallyAddRules() {
+		// This test changes the global state of Calcite! It shouldn't cause issues elsewhere since the rules avoid
+		// changing unrecognised tables, so will not apply to their own output.
+		JournalledJdbcSchema.Factory.INSTANCE.setAutomaticallyAddRules(true);
+		JournalledJdbcSchema.Factory.INSTANCE.create(null, "my-parent", options);
+		try {
+			Program def = Mockito.mock(Program.class);
+			Holder<Program> holder = Holder.of(def);
+			Hook.PROGRAM.run(Pair.of(null, holder));
+			Assert.assertTrue(holder.get() instanceof SequenceProgram);
+			Assert.assertTrue(((SequenceProgram) holder.get()).getPrograms().get(0) instanceof ForcedRulesProgram);
+		} finally {
+			JournalledJdbcRuleManager.removeHook();
+		}
 	}
 
 	private JournalledJdbcSchema makeSchema() {
