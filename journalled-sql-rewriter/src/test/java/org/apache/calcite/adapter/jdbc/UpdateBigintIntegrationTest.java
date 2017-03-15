@@ -8,7 +8,7 @@ import org.junit.Test;
 public class UpdateBigintIntegrationTest {
 	private static final String virtualSchemaName = "calcite_sql_rewriter_integration_test"; // Should be "hr" - see TargetDatabase.java
 	private static final String actualSchemaName = "calcite_sql_rewriter_integration_test";
-	private final JournalledJdbcSchema.VersionType versionType = JournalledJdbcSchema.VersionType.BIGINT;
+	private final JournalVersionType versionType = JournalVersionType.BIGINT;
 
 	@Before // TODO: find out how to make CalciteAssert run in a transaction then change this to BeforeClass
 	public void rebuildTestDatabase() throws Exception {

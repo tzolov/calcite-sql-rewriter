@@ -33,19 +33,14 @@ public class JournalledJdbcSchema extends JdbcSchema {
 	private final String journalSuffix;
 	private final String versionField;
 	private final String subsequentVersionField;
-	private final VersionType versionType;
+	private final JournalVersionType versionType;
 	private ImmutableMap<String, JdbcTable> tableMap;
 
-	public enum VersionType {
-		TIMESTAMP,
-		BIGINT
-	}
-
-	private static VersionType getVersionType(String name) {
+	private static JournalVersionType getVersionType(String name) {
 		if (name == null) {
-			return VersionType.TIMESTAMP;
+			return JournalVersionType.TIMESTAMP;
 		}
-		for (VersionType v : VersionType.values()) {
+		for (JournalVersionType v : JournalVersionType.values()) {
 			if (name.equalsIgnoreCase(v.name())) {
 				return v;
 			}
@@ -165,7 +160,7 @@ public class JournalledJdbcSchema extends JdbcSchema {
 		return subsequentVersionField;
 	}
 
-	VersionType getVersionType() {
+	JournalVersionType getVersionType() {
 		return versionType;
 	}
 

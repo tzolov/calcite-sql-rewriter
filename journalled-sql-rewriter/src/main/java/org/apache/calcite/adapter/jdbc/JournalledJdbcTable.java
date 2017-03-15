@@ -51,7 +51,7 @@ class JournalledJdbcTable extends JdbcTable {
 		return keyColumnNames;
 	}
 
-	JournalledJdbcSchema.VersionType getVersionType() {
+	JournalVersionType getVersionType() {
 		return journalledJdbcSchema.getVersionType();
 	}
 

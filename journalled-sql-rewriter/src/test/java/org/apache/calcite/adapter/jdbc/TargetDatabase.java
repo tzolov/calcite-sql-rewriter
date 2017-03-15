@@ -63,11 +63,11 @@ class TargetDatabase {
 			+ "   ]\n"
 			+ "}";
 
-	static String makeJournalledModel(JournalledJdbcSchema.VersionType versionType) {
+	static String makeJournalledModel(JournalVersionType versionType) {
 		return JOURNALLED_MODEL_TEMPLATE.replace("{VERSION_TYPE}", versionType.name());
 	}
 
-	static void rebuild(JournalledJdbcSchema.VersionType type) throws Exception {
+	static void rebuild(JournalVersionType type) throws Exception {
 		// Splitting commands at semicolons is hard; let's go delegate!
 		Process cmd = new ProcessBuilder()
 				.command("psql", DB_URL + "?user=" + DB_USER + "&password=" + DB_PASS)

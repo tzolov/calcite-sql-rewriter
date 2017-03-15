@@ -28,6 +28,8 @@ public class JournalledUpdateRule extends AbstractForcedRule {
 			throw new IllegalStateException("Unknown Calcite UPDATE structure");
 		}
 
+		String versionField = journalTable.getVersionField();
+
 		// Merge the Update's update column expression into the target INSERT
 		LogicalProject project = (LogicalProject) tableModify.getInput();
 		List<RexNode> desiredFields = new ArrayList<>();
@@ -53,16 +55,11 @@ public class JournalledUpdateRule extends AbstractForcedRule {
 
 		relBuilder.push(project.getInput());
 
-		switch(journalTable.getVersionType()) {
-			case TIMESTAMP:
-				break;
-			case BIGINT:
-				RexNode newVersion = relBuilder.call(SqlStdOperatorTable.PLUS, relBuilder.field(journalTable.getVersionField()), relBuilder.literal(1));
-				desiredFields.add(newVersion);
-				desiredNames.add(journalTable.getVersionField());
-				break;
-			default:
-				throw new UnsupportedOperationException();
+		JournalVersionType versionType = journalTable.getVersionType();
+		if (versionType.updateRequiresExplicitVersion()) {
+			RexNode newVersion = versionType.incrementVersion(relBuilder, relBuilder.field(versionField));
+			desiredFields.add(newVersion);
+			desiredNames.add(versionField);
 		}
 
 		relBuilder.project(desiredFields, desiredNames);

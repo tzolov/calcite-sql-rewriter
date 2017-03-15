@@ -85,21 +85,21 @@ public class JournalledJdbcSchemaTest {
 	@Test
 	public void testDefaultsToTimestampVersioning() {
 		JournalledJdbcSchema schema = makeSchema();
-		Assert.assertEquals(schema.getVersionType(), JournalledJdbcSchema.VersionType.TIMESTAMP);
+		Assert.assertEquals(schema.getVersionType(), JournalVersionType.TIMESTAMP);
 	}
 
 	@Test
 	public void testVersionTypeCanBeChanged() {
 		options.put("journalVersionType", "BIGINT");
 		JournalledJdbcSchema schema = makeSchema();
-		Assert.assertEquals(schema.getVersionType(), JournalledJdbcSchema.VersionType.BIGINT);
+		Assert.assertEquals(schema.getVersionType(), JournalVersionType.BIGINT);
 	}
 
 	@Test
 	public void testVersionTypeIsCaseInsensitive() {
 		options.put("journalVersionType", "bigint");
 		JournalledJdbcSchema schema = makeSchema();
-		Assert.assertEquals(schema.getVersionType(), JournalledJdbcSchema.VersionType.BIGINT);
+		Assert.assertEquals(schema.getVersionType(), JournalVersionType.BIGINT);
 	}
 
 	@Test(expected = IllegalArgumentException.class)

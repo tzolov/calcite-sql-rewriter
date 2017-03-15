@@ -8,7 +8,7 @@ import org.junit.Test;
 public class DeleteTimestampIntegrationTest {
 	private static final String virtualSchemaName = "calcite_sql_rewriter_integration_test"; // Should be "hr" - see TargetDatabase.java
 	private static final String actualSchemaName = "calcite_sql_rewriter_integration_test";
-	private final JournalledJdbcSchema.VersionType versionType = JournalledJdbcSchema.VersionType.TIMESTAMP;
+	private final JournalVersionType versionType = JournalVersionType.TIMESTAMP;
 
 	@Before // TODO: find out how to make CalciteAssert run in a transaction then change this to BeforeClass
 	public void rebuildTestDatabase() throws Exception {

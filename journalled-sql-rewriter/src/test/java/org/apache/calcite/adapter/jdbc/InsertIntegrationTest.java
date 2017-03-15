@@ -16,12 +16,12 @@ import java.util.List;
 public class InsertIntegrationTest {
 	private static final String virtualSchemaName = "calcite_sql_rewriter_integration_test"; // Should be "hr" - see TargetDatabase.java
 	private static final String actualSchemaName = "calcite_sql_rewriter_integration_test";
-	private final JournalledJdbcSchema.VersionType versionType;
+	private final JournalVersionType versionType;
 
 	@Parameterized.Parameters(name = "{index}: {0}")
 	public static Collection<Object[]> data() {
 		List<Object[]> result = new ArrayList<>();
-		for(JournalledJdbcSchema.VersionType vt : JournalledJdbcSchema.VersionType.values()) {
+		for(JournalVersionType vt : JournalVersionType.values()) {
 			result.add(new Object[] {vt});
 		}
 		return result;
@@ -32,7 +32,7 @@ public class InsertIntegrationTest {
 		JournalledJdbcSchema.Factory.INSTANCE.setAutomaticallyAddRules(false);
 	}
 
-	public InsertIntegrationTest(JournalledJdbcSchema.VersionType versionType) throws Exception {
+	public InsertIntegrationTest(JournalVersionType versionType) throws Exception {
 		this.versionType = versionType;
 	}
 
