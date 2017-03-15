@@ -17,12 +17,120 @@ This project _emulates_ `INSERT`, `UPDATE` and `DELETE` by turning them into
 append-only `INSERT`s. Instead of updating rows in-place it inserts the new version of the row using two
 additional metadata columns: `version_number` and `subsequent_version_number` of either `TIMESTAMP` or `BIGINT` type.
 
+---
+_Note that this project can be used as workaround. Complete solution will be provided with:_ [HAWQ-304](https://issues.apache.org/jira/browse/HAWQ-304).
+
+---
+
+### How-to-Use
+
+##### Code
+
+Use as a standard JDBC `Connection`:
+
+```java
+public class Main {
+	public static void main(String[] argv) throws Exception {
+		Class.forName(org.apache.calcite.jdbc.Driver.class.getName());
+		Properties info = new Properties();
+		info.setProperty("lex", "JAVA"); // Enables case sensitivity
+		info.setProperty("model", "path/to/myModel.json"); // See section below
+		Connection connection = DriverManager.getConnection("jdbc:calcite:", info);
+
+		// use connection as usual
+	}
+}
+```
+
+##### Model
+
+To connect to the SQL-Rewrite JDBC driver you need to provide a [model](https://calcite.apache.org/docs/model.html).
+Models can be JSON files, or built programmatically. A model is comprised of two group of attributes:
+
+1. Calcite generic attributes, as explained here [model attributes](https://calcite.apache.org/docs/model.html)
+1. `sql-rewrite` specific attributes set via the `operand` properties. The table below explains the specific properties.
+
+Note that you must provide *one* of:
+
+* `dataSource`;
+* `connection`;
+* or `jdbcDriver` &amp; `jdbcUrl`.
+
+| Property                        | Description | Default |
+| ------------------------------- |:------------|:--------|
+| `dataSource`                    | Class name to use as the underlying `DataSource`<br />(provide this *or* `connection` *or* `jdbcDriver` &amp; `jdbcUrl`) | *none* |
+| `connection`                    | Path to the backend jdbc connection configuration file<br />(provide this *or* `dataSource` *or* `jdbcDriver` &amp; `jdbcUrl`) | *none* |
+| `jdbcDriver`                    | See section below | *none* |
+| `jdbcUrl`                       | See section below | *none* |
+| `jdbcUser`                      | See section below | *none* |
+| `jdbcPassword`                  | See section below | *none* |
+| `jdbcSchema`                    | The schema name in the database. Note that due to [CALCITE-1692](https://issues.apache.org/jira/browse/CALCITE-1692) this *must* match the `name` | *none* |
+| `journalSuffix`                 | Journal table suffix | `_journal` |
+| `journalVersionField`           | Journal table version number column name | `version_number` |
+| `journalSubsequentVersionField` | Journal table delete flag column name | `subsequent_version_number` |
+| `journalVersionType`            | The type of the version columns. Either `TIMESTAMP` or `BIGINT` | `TIMESTAMP` |
+| `journalDefaultKey`             | List of columns to use as primary keys by default (applies when tables do not have an explicit list given in `journalTables`) | *none* |
+| `journalTables`                 | List of journalled tables to be managed. Expressions involving other tables will pass-through unchanged.<br />This can be a list of table names, or a map of table names to primary key columns. | *none* |
+
+For example:
+
+```json
+{
+  "version": "1.0",
+  "defaultSchema": "doesntmatter",
+  "schemas": [
+    {
+      "name": "hr",
+      "type": "custom",
+      "factory": "org.apache.calcite.adapter.jdbc.JournalledJdbcSchema$Factory",
+      "operand": {
+        "connection": "myTestConnection.json",
+        "jdbcSchema": "hr",
+        "journalSuffix": "_journal",
+        "journalVersionField": "version_number",
+        "journalSubsequentVersionField": "subsequent_version_number",
+        "journalDefaultKey": ["id"],
+        "journalTables": {
+          "emps": ["empid"],
+          "depts": ["deptno"]
+        }
+      }
+    }
+  ]
+}
+```
+
+##### Backend DB Connection
+
+Backend DB connection configuration can be provided inside `model.json`, or in a separate file referenced by
+`model.json` (via the `connection` operand).
+
+The connection configuration contains the common JDBC connection properties like driver, jdbc URL, and credentials.
+
+| Property Name   | Description                                                        |
+| --------------- |:-------------------------------------------------------------------|
+| `jdbcDriver`    | JDBC driver Class name. For example: `org.postgresql.Driver`       |
+| `jdbcUrl`       | JDBC URL. For example: `jdbc:postgresql://localhost:5432/postgres` |
+| `jdbcUser`      | The database user on whose behalf the connection is being made.    |
+| `jdbcPassword`  | The database user's password.                                      |
+
+For example:
+
+```json
+{
+  "jdbcDriver": "org.postgresql.Driver",
+  "jdbcUrl": "jdbc:postgresql://localhost:5432/postgres",
+  "jdbcUser": "myDatabaseUser",
+  "jdbcPassword": "myDatabasePassword"
+}
+```
+
+### How It Works
+
 `sql-rewrite` leverages [Apache Calcite](https://calcite.apache.org/) to implement a JDBC adapter between the end-users
 and the backend *SQL-on-Hadoop* system. It exposes a fully-fledged JDBC interface to the end-users while internally
 converts the incoming `INSERT`, `UPDATE` and `DELETE` into append-only `INSERT`s and forwards later to
 the backend DB (aka [Apache HAWQ](http://hawq.incubator.apache.org/) ).
-
-### How It Works
 
 Lets have a Department table called `depts`, with `deptno` (key) and `department_name` columns:
 ```sql
@@ -120,95 +228,6 @@ For every `deptno` only the row with the highest`version_number` is returned.
 
 The `MAX(version_number) OVER (PARTITION BY deptno)` [window function](https://www.postgresql.org/docs/9.6/static/tutorial-window.html)
 computes the max `version_number` per `deptno`.
-
-### Configuration
-
-###### Calcite JDBC connection
-
-To connect to the SQL-Rewrite JDBC driver you need to provide [model](https://calcite.apache.org/docs/model.html) JSON
-document. Models can also be built programmatically. Model is comprised of two group of attributes: (1) Calcite generic
-as explained here [model attributes](https://calcite.apache.org/docs/model.html) and (2) `sql-rewrite` specific attributes
-set via the `operand` properties. The table below explains the specific properties.
-
-Note that you must provide *one* of:
-
-* `dataSource`
-* `connection`;
-* or `jdbcDriver` &amp; `jdbcUrl`
-
-| Property                        | Description | Default |
-| ------------------------------- |:------------|:--------|
-| `dataSource`                    | Class name to use as the underlying `DataSource`<br />(provide this *or* `connection` *or* `jdbcDriver` &amp; `jdbcUrl`) | *none* |
-| `connection`                    | Path to the backend jdbc connection configuration file<br />(provide this *or* `dataSource` *or* `jdbcDriver` &amp; `jdbcUrl`) | *none* |
-| `jdbcDriver`                    | See section below | *none* |
-| `jdbcUrl`                       | See section below | *none* |
-| `jdbcUser`                      | See section below | *none* |
-| `jdbcPassword`                  | See section below | *none* |
-| `jdbcSchema`                    | The schema name in the database. Note that due to [CALCITE-1692](https://issues.apache.org/jira/browse/CALCITE-1692) this *must* match the `name` | *none* |
-| `journalSuffix`                 | Journal table suffix | `_journal` |
-| `journalVersionField`           | Journal table version number column name | `version_number` |
-| `journalSubsequentVersionField` | Journal table delete flag column name | `subsequent_version_number` |
-| `journalVersionType`            | The type of the version columns. Either `TIMESTAMP` or `BIGINT` | `TIMESTAMP` |
-| `journalDefaultKey`             | List of columns to use as primary keys by default (applies when tables do not have an explicit list given in `journalTables`) | *none* |
-| `journalTables`                 | List of journalled tables to be managed. Expressions involving other tables will pass-through unchanged.<br />This can be a list of table names, or a map of table names to primary key columns. | *none* |
-
-For example:
-
-```json
-{
-  "version": "1.0",
-  "defaultSchema": "doesntmatter",
-  "schemas": [
-    {
-      "name": "hr",
-      "type": "custom",
-      "factory": "org.apache.calcite.adapter.jdbc.JournalledJdbcSchema$Factory",
-      "operand": {
-        "connection": "myTestConnection.json",
-        "jdbcSchema": "hr",
-        "journalSuffix": "_journal",
-        "journalVersionField": "version_number",
-        "journalSubsequentVersionField": "subsequent_version_number",
-        "journalDefaultKey": ["id"],
-        "journalTables": {
-          "emps": ["empid"],
-          "depts": ["deptno"]
-        }
-      }
-    }
-  ]
-}
-```
-
-###### Backend DB connection
-
-Backend DB connection configuration can be provided inside `model.json`, or in a separate file referenced by
-`model.json` (via the `connection` operand).
-
-The connection configuration contains the common JDBC connection properties like driver, jdbc URL, and credentials.
-
-| Property Name   | Description                                                        |
-| --------------- |:-------------------------------------------------------------------|
-| `jdbcDriver`    | JDBC driver Class name. For example: `org.postgresql.Driver`       |
-| `jdbcUrl`       | JDBC URL. For example: `jdbc:postgresql://localhost:5432/postgres` |
-| `jdbcUser`      | The database user on whose behalf the connection is being made.    |
-| `jdbcPassword`  | The database user's password.                                      |
-
-For example:
-
-```json
-{
-  "jdbcDriver": "org.postgresql.Driver",
-  "jdbcUrl": "jdbc:postgresql://localhost:5432/postgres",
-  "jdbcUser": "myDatabaseUser",
-  "jdbcPassword": "myDatabasePassword"
-}
-```
-
----
-_Note that this project can be used as workaround. Complete solution will be provided with:_ [HAWQ-304](https://issues.apache.org/jira/browse/HAWQ-304).
-
----
 
 ### Limitations
 
