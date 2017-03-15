@@ -1,31 +1,37 @@
-# calcite-sql-rewriter
-Converts `INSERT`, `UPDATE` and `DELETE` into append-only INSERT statements.
-Useful for SQL-on-Hadoop like `Apache HAWQ` that doesn't provide in-place mutation operations yet.
-[ ![Download](https://api.bintray.com/packages/big-data/maven/calcite-sql-rewriter/images/download.svg) ](https://api.bintray.com/packages/big-data/maven/calcite-sql-rewriter/_latestVersion)
+# SQL Rewriter
+JDBC driver that converts any `INSERT`, `UPDATE` and `DELETE` statements into append-only `INSERT`s. Instead of 
+updating rows in-place it inserts the new version of the row along with version metadata.
+[ ![Download](https://api.bintray.com/packages/big-data/maven/calcite-sql-rewriter/images/download.svg) ](https://bintray.com/big-data/maven/calcite-sql-rewriter/_latestVersion)
 
-### Overview
-The `Sql-On-Hadoop` engines like [Apache HAWQ](http://hawq.incubator.apache.org/) often use `HDFS` (or alike) to store the data.
-Later are design for high throughput scans. They does not allow random access or in-place data mutation.
+`SQL on Hadoop` data management systems such as [Apache HAWQ](http://hawq.incubator.apache.org/) do not offer the 
+same style of INSERT, UPDATE, and DELETE that users expect of traditional RDBMS. Unlike transactional 
+systems, big-data analytical queries are dominated by SELECT over millions or billions of rows. Analytical 
+databases are optimized for this kind of workload. The storage systems are optimized for high throughput scans, and 
+commonly implemented as immutable (`append-only`) persistence stores. No in-place updates are allowed. 
 
-Because of those limitations the `Sql-On-Hadoop` naturally support support append-only operations like `INSERT`
-or operations that affect the entire data set like `DROP`.
-
-In-place operations like `UPDATE` or `DELETE` require additional effort to _emulate_:
+The `SQL on Hadoop` systems naturally support append-only operations such as `INSERT`. The `UPDATE` or `DELETE` demand 
+an alternative approach:
 [HAWQ-304](https://issues.apache.org/jira/browse/HAWQ-304), [HIVE-5317](https://issues.apache.org/jira/browse/HIVE-5317)
 
-This project _emulates_ the `INSERT`, `UPDATE` and `DELETE` operations by converting them into
-append-only `INSERT`s. Instead of updating rows in-place it inserts the new version of the row using two
+The `sql-rewrite` project _emulates_ `INSERT`, `UPDATE` and `DELETE` by turning them into
+append-only `INSERTs`. Instead of updating rows in-place it inserts the new version of the row using two
 additional metadata columns: `version_number` and `subsequent_version_number`. 
 
-The `version_number` holds the version when the row was inserted in the table. The latest (or highest `version_number` 
-represents the current record version. The `subsequent_version_number` is set only when the row is marked as deleted, 
-and can be populated on older records by background archival tasks.
+* `version_number` holds the version when the row that was inserted in the table. It is an increasing number and 
+the highest value represents the current/latest row version. 
+* `subsequent_version_number` is used to mark deleted rows, set when the row is marked as deleted, and can be populated 
+on older records by background archival tasks.
 
-[Apache Calcite](https://calcite.apache.org/) is leveraged to implement the row version management. Externally it exposes a 
-plain `JDBC` interface while internally it converts the incoming `INSERT`, `UPDATE` and `DELETE` statements into 
-append-only `INSERT`s and sends them to pre-configured backend DB like [Apache HAWQ](http://hawq.incubator.apache.org/).
+The `version_number` and `subsequent_version_number` can be of either `TIMESTAMP` or `BIGINT` type.
 
-For example given a business table `depts` with two columns `deptno` (key) and `department_name`:
+`sql-rewrite` leverages [Apache Calcite](https://calcite.apache.org/) to implement a `JDBC adapter` between the end-users 
+and the backend SQL-on-Hadoop system. It exposes a fully fledged `JDBC` interface to the end-users while internally  
+converts the incoming `INSERT`, `UPDATE` and `DELETE` into append-only `INSERTs` and forwards them to 
+the backend DB (e.g [Apache HAWQ](http://hawq.incubator.apache.org/) alike).
+
+### How to use
+
+For example lets have a Department table called `depts`, with `deptno` (key) and `department_name` columns:
 ```sql
 CREATE TABLE hr.depts (
   deptno                    SERIAL                   NOT NULL,
@@ -33,8 +39,9 @@ CREATE TABLE hr.depts (
   PRIMARY KEY (deptno)
 );
 ```
-According to the convention you need to define a new `journal` table with name: `<your-table-name>_journal`) adding
-two metadata columns: `version_number` and `subsequent_version_number` columns: (the column order does not matter)
+The `sql-rewrite` convention requires you to create a corresponding journal table with name: 
+`<your-table-name>_journal`), same schema as the original table plus two metadata columns: `version_number` 
+and `subsequent_version_number` of `TIMESTAMP` or `BIGINT` type.  The column order does not matter.
 ```sql
 CREATE TABLE hr.depts_journal (
   deptno                    SERIAL                   NOT NULL,
@@ -44,13 +51,12 @@ CREATE TABLE hr.depts_journal (
   PRIMARY KEY (deptno, version_number)
 );
 ```
-The `version_number` is generated on every row insert and holds the `CURRENT_TIMESTAP`. Latest `version_number` 
-represents to the current row record.
-The `subsequent_version_number` is set when the row is marked as deleted.
+The `version_number` values are generated on row insert. Latest `version_number` represents the current row state.
+The `subsequent_version_number` is set if the row is mark as deleted or stays NULL otherwise.
 
-Note that the result key is composed of the busyness keys (`deptno`) and the version metadata (`version_number`). 
+Note that the new key is composed of the original key(s) `deptno` and the `version_number`! 
 
-Here is how the `INSERT`, `UPDATE`, `DELETE` and `SELECT` statements are represented internally.
+Find below how some sample `INSERT`, `UPDATE`, `DELETE` and `SELECT` statements are represent and managed internally.
 
 1. Issuing an `INSERT` statement against the Calcite JDBC driver
 ```sql
@@ -124,8 +130,8 @@ The `MAX(version_number) OVER (PARTITION BY deptno)` [window function](https://w
 max `version_number` per `deptno`.
 
 ---
-_Note that this project provides just a temporal workaround. Complete solution will be provided with:_ [HAWQ-304](https://issues.apache.org/jira/browse/HAWQ-304)
-
+_Note that this project can be used a temporal workaround. Complete solution will be provided with:_ 
+[HAWQ-304](https://issues.apache.org/jira/browse/HAWQ-304). _Check the limitations explained below!_ 
 ---
 
 ### Limitations
@@ -142,3 +148,4 @@ When using this project, it is important to be aware of the following limitation
 * [HAWQ-304](https://issues.apache.org/jira/browse/HAWQ-304) Support update and delete on non-heap tables
 * [HIVE-5317](https://issues.apache.org/jira/browse/HIVE-5317) Implement insert, update, and delete in Hive with full ACID support
 * [Four steps strategy for incremental updates in Hive](https://hortonworks.com/blog/four-step-strategy-incremental-updates-hive/)
+* [Timestamp-based concurrency control](https://en.wikipedia.org/wiki/Timestamp-based_concurrency_control)
