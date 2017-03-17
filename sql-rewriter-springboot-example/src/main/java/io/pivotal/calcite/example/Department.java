@@ -9,8 +9,7 @@ public class Department {
 
 	private String departmentName;
 
-	protected Department() {
-	}
+	protected Department() {}
 
 	public Department(Long deptno, String departmentName) {
 		this.deptno = deptno;
@@ -21,7 +20,6 @@ public class Department {
 	public String toString() {
 		return "Department{" +
 				"deptno=" + deptno +
-				", departmentName='" + departmentName + '\'' +
-				'}';
+				", departmentName='" + departmentName + "'}";
 	}
 }

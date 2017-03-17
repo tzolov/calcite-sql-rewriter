@@ -1,6 +1,0 @@
-{
-  "jdbcDriver": "org.postgresql.Driver",
-  "jdbcUrl": "jdbc:postgresql://localhost:5432/postgres",
-  "jdbcUser": "pivotal",
-  "jdbcPassword": ""
-}
