@@ -15,7 +15,6 @@
 	<modules>
 		<module>journalled-sql-rewriter</module>
 		<module>journalled-sql-rewriter-example</module>
-		<module>sql-rewriter-springboot-example</module>
 	</modules>
 
 	<licenses>
