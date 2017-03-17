@@ -247,8 +247,67 @@ When using this project, it is important to be aware of the following limitation
   (for `BIGINT` versioning it will be rejected if the key ever existed, and for `TIMESTAMP` it will be accepted even
   if an existing non-deleted record has the same key).
 
-### References
-* [HAWQ-304](https://issues.apache.org/jira/browse/HAWQ-304) Support update and delete on non-heap tables
-* [HIVE-5317](https://issues.apache.org/jira/browse/HIVE-5317) Implement insert, update, and delete in Hive with full ACID support
-* [Four steps strategy for incremental updates in Hive](https://hortonworks.com/blog/four-step-strategy-incremental-updates-hive/)
-* [Timestamp-based concurrency control](https://en.wikipedia.org/wiki/Timestamp-based_concurrency_control)
+### How to use SqlLine
+
+On the target Posgres/Greenplum or HAWQ create test schema `hr` and table `depts_journal`:
+```sql
+DROP SCHEMA IF EXISTS hr CASCADE;
+CREATE SCHEMA hr;
+
+CREATE TABLE hr.depts_journal (
+  deptno                    SERIAL                   NOT NULL,
+  version_number            TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  subsequent_version_number TIMESTAMP WITH TIME ZONE NULL     DEFAULT NULL,
+  department_name           TEXT                     NOT NULL,
+  PRIMARY KEY (deptno, version_number)
+);
+```
+
+start `sqlline` from the root folder:
+```
+./sqlline
+```
+Connect to the [journalled-sql-rewriter-example model](journalled-sql-rewriter-example/src/main/resources/myTestModel.json).
+```
+sqlline> !connect jdbc:calcite:lex=JAVA;model=journalled-sql-rewriter-example/src/main/resources/myTestModel.json
+```
+Hit enter for username and password.
+
+Insert new rows:
+```sql
+0: jdbc:calcite:lex=JAVA> INSERT INTO hr.depts (deptno, department_name) VALUES (666, 'TEST1');
+0: jdbc:calcite:lex=JAVA> INSERT INTO hr.depts (deptno, department_name) VALUES (999, 'TEST2');
+```
+Check content:
+```sql
+0: jdbc:calcite:lex=JAVA> select * from hr.depts;
++------------+-----------------+
+|   deptno   | department_name |
++------------+-----------------+
+| 666        | TEST1           |
+| 999        | TEST2           |
++------------+-----------------+
+2 rows selected (0.035 seconds)
+```
+Update a `deptno=666`
+
+```sql
+0: jdbc:calcite:lex=JAVA> UPDATE hr.depts SET department_name='NEW VALUE' WHERE deptno=666;
+```
+
+Delete a `deptno=999`
+
+```sql
+0: jdbc:calcite:lex=JAVA> DELETE FROM hr.depts WHERE deptno=999;
+```
+Check table content:
+
+```sql
+0: jdbc:calcite:lex=JAVA> select * from hr.depts;
++------------+-----------------+
+|   deptno   | department_name |
++------------+-----------------+
+| 666        | NEW VALUE       |
++------------+-----------------+
+1 row selected (0.02 seconds)
+```
