@@ -4,7 +4,7 @@
 
 	<groupId>io.pivotal.calcite.example</groupId>
 	<artifactId>sql-rewriter-springboot-example</artifactId>
-	<version>1.3</version>
+	<version>1.4-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>sql-rewriter-springboot-example</name>
@@ -28,7 +28,7 @@
 		<dependency>
 			<groupId>io.pivotal.calcite</groupId>
 			<artifactId>journalled-sql-rewriter</artifactId>
-			<version>1.3</version>
+			<version>1.4-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -65,9 +65,4 @@
 			<url>http://dl.bintray.com/big-data/maven</url>
 		</repository>
 	</repositories>
-
-
-  <scm>
-    <tag>sql-rewriter-1.3</tag>
-  </scm>
 </project>
