@@ -33,4 +33,27 @@ Use `spring.config.name` environment property to switch from `application.proper
 In addition to `application.properties` files, profile-specific properties can also be defined using the naming convention `application-{profile}.properties`.
 he `Environment` has a set of default profiles (by default `[default]`) which are used if no active profiles are set (i.e. if no profiles are explicitly activated then properties from `application-default.properties` are loaded).
 
+#### Retrieve Sql-Rewriter from public maven repository
+
+To resolve `journalled-sql-rewriter` you need to add the following maven repository to your `pom.xml`  
+```xml
+<repository>
+	<snapshots>
+		<enabled>false</enabled>
+	</snapshots>
+	<id>bintray-big-data-maven</id>
+	<name>bintray</name>
+	<url>http://dl.bintray.com/big-data/maven</url>
+</repository>
+```
+Then add then `journalled-sql-rewriter` dependency to your `pom.xml`
+```xml
+<dependency>
+	<groupId>io.pivotal.calcite</groupId>
+	<artifactId>journalled-sql-rewriter</artifactId>
+	<version>1.4</version>
+</dependency>
+
+```
+make sure you select the latest version: [ ![Download](https://api.bintray.com/packages/big-data/maven/calcite-sql-rewriter/images/download.svg) ](https://bintray.com/big-data/maven/calcite-sql-rewriter/_latestVersion)
 
