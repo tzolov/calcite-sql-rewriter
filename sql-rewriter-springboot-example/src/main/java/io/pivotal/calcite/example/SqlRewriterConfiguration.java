@@ -22,18 +22,18 @@ public class SqlRewriterConfiguration {
 
 	@Bean
 	@ConfigurationProperties("calcite.datasource")
-	public DataSource dataSource(@Autowired String inlineModelConnection) {
-		log.info("Calcite jdbc url: " + inlineModelConnection);
+	public DataSource dataSource(@Autowired String inlineModel) {
+		log.info("Calcite Model: " + inlineModel);
 
 		return DataSourceBuilder
 				.create()
 				.driverClassName("org.apache.calcite.jdbc.Driver")
-				.url(inlineModelConnection)
+				.url("jdbc:calcite:lex=JAVA;model=inline:" + inlineModel)
 				.build();
 	}
 
 	@Bean
-	public String inlineModelConnection(
+	public String inlineModel(
 			@Value("${calcite.journalVersionType:TIMESTAMP}") String journalVersionType,
 			@Value("${calcite.journalDefaultKey}") String journalDefaultKey,
 			@Value("${calcite.journalTables}") String journalTables,
@@ -70,6 +70,6 @@ public class SqlRewriterConfiguration {
 				"  ]\n" +
 				"}";
 
-		return "jdbc:calcite:lex=JAVA;model=inline:" + model;
+		return model;
 	}
 }
