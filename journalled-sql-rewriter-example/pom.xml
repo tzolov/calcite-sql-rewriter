@@ -5,7 +5,7 @@
     <parent>
         <groupId>io.pivotal.calcite</groupId>
         <artifactId>sql-rewriter</artifactId>
-        <version>1.5</version>
+        <version>1.6-SNAPSHOT</version>
     </parent>
 
     <artifactId>journalled-sql-rewriter-example</artifactId>
@@ -23,7 +23,7 @@
         <dependency>
             <groupId>io.pivotal.calcite</groupId>
             <artifactId>journalled-sql-rewriter</artifactId>
-            <version>1.5</version>
+            <version>1.6-SNAPSHOT</version>
         </dependency>
 
         <dependency>
