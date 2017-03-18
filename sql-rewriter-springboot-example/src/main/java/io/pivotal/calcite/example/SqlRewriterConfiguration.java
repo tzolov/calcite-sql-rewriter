@@ -11,6 +11,7 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceBuilder;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
  * Created by tzoloc on 3/17/17.
@@ -21,15 +22,39 @@ public class SqlRewriterConfiguration {
 	private static final Logger log = LoggerFactory.getLogger(Application.class);
 
 	@Bean
-	@ConfigurationProperties("calcite.datasource")
-	public DataSource dataSource(@Autowired String inlineModel) {
-		log.info("Calcite Model: " + inlineModel);
+	public JdbcTemplate calciteJdbcTemplate(DataSource dataSource) {
+		return new JdbcTemplate(dataSource);
+	}
 
-		return DataSourceBuilder
+	@Bean
+	@ConfigurationProperties("calcite.datasource")
+	public DataSource calciteDataSource(@Autowired String inlineModel) {
+		DataSource dataSource = DataSourceBuilder
 				.create()
 				.driverClassName("org.apache.calcite.jdbc.Driver")
 				.url("jdbc:calcite:lex=JAVA;model=inline:" + inlineModel)
 				.build();
+
+		log.info("Calcite mode: " + inlineModel);
+		return  dataSource;
+	}
+
+	@Bean
+	public JdbcTemplate postgresJdbcTemplate(
+			@Value("${postgres.jdbcUrl}") String postgresJdbcUrl,
+			@Value("${postgres.jdbcDriver}") String postgresJdbcDriver,
+			@Value("${postgres.jdbcUser}") String postgresJdbcUser,
+			@Value("${postgres.jdbcPassword}") String postgresJdbcPassword) {
+
+		DataSource targetDataSource = DataSourceBuilder
+				.create()
+				.driverClassName(postgresJdbcDriver)
+				.url(postgresJdbcUrl)
+				.username(postgresJdbcUser)
+				.password(postgresJdbcPassword)
+				.build();
+
+		return new JdbcTemplate(targetDataSource);
 	}
 
 	@Bean
