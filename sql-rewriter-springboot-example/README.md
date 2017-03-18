@@ -1,11 +1,15 @@
 # SQL Rewriter SpringBoot Sample
 
-This project shows how to use the `sql-rewriter` within SpringBoot application. It leverages `JcbcTemplate` and the 
-configuration properties support. 
+Demo how to use the `sql-rewriter` within a SpringBoot application. It leverages `JcbcTemplate` and the 
+Spring configuration utilities. 
  
-The `SqlRewriterConfiguration` class inlines the `sql-rewriter`'s model.json configuration files into 
-a plain Spring `application.properties` (or YMAL) configuration. Furthermore you can splint the those properties files 
-as required and leverage the Spring profiles. 
+The [SqlRewriterConfiguration](src/main/java/io/pivotal/calcite/example/SqlRewriterConfiguration) class shows how to inline 
+all `sql-rewriter`'s configuration files into a plain Spring `application.properties` (or YMAL) configuration. 
+
+The [Configuration Options][1] section below explains how to use profiles so you can activate different 
+configurations in different environments. 
+
+Project also shows how to use the `Big-Data` public [Maven repo][2] to resolve the `sql-rewriter` library. 
 
 #### How To Use
 
@@ -23,7 +27,7 @@ CREATE TABLE ${ACTUAL_SCHEMA}.depts_journal (
 );
 
 ```
-2. Withint `sql-rewriter-springboot-example` folder compile the and run the project
+2. Inside`sql-rewriter-springboot-example/` build and run the project
 ```bash
 cd sql-rewriter-springboot-example/
 mvn clean install
@@ -31,7 +35,7 @@ mvn clean install
 ```bash
 java -jar target/sql-rewriter-springboot-example-0.0.1-SNAPSHOT.jar
 ```
-You will see out put like this:
+You should see an output like this:
 ```bash
 : --- CREATE depts_journal table --- 
 : --- INSERT in depts table --- 
@@ -67,6 +71,8 @@ You will see out put like this:
 : --- END --- 
 
 ```
+
+[1]: 
 ## Configuration Options
 #### [Srping Application property files](https://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-external-config.html#boot-features-external-config-application-property-files)
 SpringApplication will load properties from `application.properties` files in the following locations and add them to the Spring Environment:
@@ -86,8 +92,8 @@ Use `spring.config.name` environment property to switch from `application.proper
 In addition to `application.properties` files, profile-specific properties can also be defined using the naming convention `application-{profile}.properties`.
 he `Environment` has a set of default profiles (by default `[default]`) which are used if no active profiles are set (i.e. if no profiles are explicitly activated then properties from `application-default.properties` are loaded).
 
+[2]: 
 ## Maven repository
-
 To resolve `journalled-sql-rewriter` you need to add the following maven repository to your `pom.xml`  
 ```xml
 <repository>
@@ -108,5 +114,5 @@ Then add then `journalled-sql-rewriter` dependency to your `pom.xml`
 </dependency>
 
 ```
-make sure you select the latest version: [ ![Download](https://api.bintray.com/packages/big-data/maven/calcite-sql-rewriter/images/download.svg) ](https://bintray.com/big-data/maven/calcite-sql-rewriter/_latestVersion)
+Always use the latest version: [ ![Download](https://api.bintray.com/packages/big-data/maven/calcite-sql-rewriter/images/download.svg) ](https://bintray.com/big-data/maven/calcite-sql-rewriter/_latestVersion)
 
