@@ -11,7 +11,6 @@ import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.logical.LogicalTableModify;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
-import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.util.Pair;
 
 public class JournalledUpdateRule extends AbstractForcedRule {
@@ -56,6 +55,12 @@ public class JournalledUpdateRule extends AbstractForcedRule {
 		relBuilder.push(project.getInput());
 
 		JournalVersionType versionType = journalTable.getVersionType();
+		if (!versionType.isValidSqlType(relBuilder.field(versionField).getType().getSqlTypeName())) {
+			throw new IllegalStateException("Incorrect version_number type! Model's journalVersionType it: ["
+					+ versionType.name() + "], But actual column type is: ["
+					+ relBuilder.field(versionField).getType().getSqlTypeName() + "]. Verify if your journalVersionType " +
+					"is correctly set!");
+		}
 		if (versionType.updateRequiresExplicitVersion()) {
 			RexNode newVersion = versionType.incrementVersion(relBuilder, relBuilder.field(versionField));
 			desiredFields.add(newVersion);

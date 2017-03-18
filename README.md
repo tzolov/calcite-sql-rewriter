@@ -42,8 +42,10 @@ public class Main {
 	}
 }
 ```
-Visit [sql-rewriter-springboot-example](./sql-rewriter-springboot-example) and [journalled-sql-rewriter-example](./journalled-sql-rewriter-example) 
+Consult [sql-rewriter-springboot-example](./sql-rewriter-springboot-example) and [journalled-sql-rewriter-example](./journalled-sql-rewriter-example) 
 for more elaborated examples. 
+
+[SqlLine](#how-to-use-sqlline) offers a handy command-line tool for testing `sql-rewriter`.
 
 
 ##### Model
