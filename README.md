@@ -42,6 +42,9 @@ public class Main {
 	}
 }
 ```
+Visit [sql-rewriter-springboot-example](./sql-rewriter-springboot-example) and [journalled-sql-rewriter-example](./journalled-sql-rewriter-example) 
+for more elaborated examples. 
+
 
 ##### Model
 

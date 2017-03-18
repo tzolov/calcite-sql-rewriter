@@ -1,15 +1,14 @@
-# SQL Rewriter SpringBoot Sample
+# SQL-Rewriter SpringBoot Example
 
-Demo how to use the `sql-rewriter` within a SpringBoot application. It leverages `JcbcTemplate` and the 
-Spring configuration utilities. 
+How to use `sql-rewriter` within a [SpringBoot](https://projects.spring.io/spring-boot/) applications. Leverage
+utilities such as [JdbcTemplate](http://docs.spring.io/spring-boot/docs/1.5.2.RELEASE/reference/htmlsingle/#boot-features-using-jdbc-template) 
+and [еxternalized configuration](http://docs.spring.io/spring-boot/docs/1.5.2.RELEASE/reference/htmlsingle/#boot-features-external-config). 
  
-The [SqlRewriterConfiguration](src/main/java/io/pivotal/calcite/example/SqlRewriterConfiguration) class shows how to inline 
-all `sql-rewriter`'s configuration files into a plain Spring `application.properties` (or YMAL) configuration. 
-
-The [configuration options](#Configuration-Options) below explain how to use profiles so you can activate different 
+* The [SqlRewriterConfiguration](src/main/java/io/pivotal/calcite/example/SqlRewriterConfiguration) class shows how to inline 
+the `sql-rewriter` configuration files into plain Spring `application.properties` (or `YMAL`) configurations. 
+* The [configuration options](#configuration-options) below explain how to use profiles so you can activate different 
 configurations in different environments. 
-
-Project also shows how to use the `Big-Data` public [maven repo](#Maven-repository) to resolve the `sql-rewriter` library. 
+* Resolve the `sql-rewriter` library from public [maven repo](#maven-repository). 
 
 #### How To Use
 
@@ -28,39 +27,43 @@ CREATE TABLE hr.depts_journal (
 ```
 _Mind that the `version_number` is of type `SERIAL` not `BIGINT`! This is important for the INSERT/DELETE/INSERT to work!_
 
-2. Inside`sql-rewriter-springboot-example/` build and run the project
+2. Inside`sql-rewriter-springboot-example/` build the project
 ```bash
 cd sql-rewriter-springboot-example/
 mvn clean install
 ```
+and the run it
 ```bash
 java -jar target/sql-rewriter-springboot-example-0.0.1-SNAPSHOT.jar
 ```
+_(use `--spring.profiles.active=<profile-name>` to activate the [configuration profile](#spring-profile-specific-properties) 
+suitable for your environment)_
+
 You should see an output like this:
 ```bash
  : 1. CREATE depts_journal table
- :      QUERY all depts
+ :      All depts:
  :        Count:0
- :      QUERY all depts_journal
+ :      All depts_journal:
  :        Count:0
  : 2. INSERT 3 rows in depts
- :      QUERY all depts
+ :      All depts:
  :        Department{deptno=666, departmentName='Department666'}
  :        Department{deptno=667, departmentName='Department667'}
  :        Department{deptno=668, departmentName='Department668'}
  :        Count:3
- :      QUERY all depts_journal
+ :      All depts_journal:
  :        ver: [1] sub_ver: [null] deptsno: [666] depts_name: [Department666]
  :        ver: [2] sub_ver: [null] deptsno: [667] depts_name: [Department667]
  :        ver: [3] sub_ver: [null] deptsno: [668] depts_name: [Department668]
  :        Count:3
  : 3. UPDATE all depts rows
- :      QUERY all depts
+ :      All depts:
  :        Department{deptno=666, departmentName='NewName'}
  :        Department{deptno=667, departmentName='NewName'}
  :        Department{deptno=668, departmentName='NewName'}
  :        Count:3
- :      QUERY all depts_journal
+ :      All depts_journal:
  :        ver: [1] sub_ver: [null] deptsno: [666] depts_name: [Department666]
  :        ver: [2] sub_ver: [null] deptsno: [667] depts_name: [Department667]
  :        ver: [3] sub_ver: [null] deptsno: [668] depts_name: [Department668]
@@ -69,9 +72,9 @@ You should see an output like this:
  :        ver: [4] sub_ver: [null] deptsno: [668] depts_name: [NewName]
  :        Count:6
  : 4. DELETE all depts rows
- :      QUERY all depts
+ :      All depts:
  :        Count:0
- :      QUERY all depts_journal
+ :      All depts_journal:
  :        ver: [1] sub_ver: [null] deptsno: [666] depts_name: [Department666]
  :        ver: [2] sub_ver: [null] deptsno: [667] depts_name: [Department667]
  :        ver: [3] sub_ver: [null] deptsno: [668] depts_name: [Department668]
@@ -83,12 +86,12 @@ You should see an output like this:
  :        ver: [5] sub_ver: [5] deptsno: [668] depts_name: [NewName]
  :        Count:9
  : 5. INSERT 3 rows in depts again
- :      QUERY all depts
+ :      All depts:
  :        Department{deptno=666, departmentName='Second Insert 666'}
  :        Department{deptno=667, departmentName='Second Insert 667'}
  :        Department{deptno=668, departmentName='Second Insert 668'}
  :        Count:3
- :      QUERY all depts_journal
+ :      All depts_journal:
  :        ver: [1] sub_ver: [null] deptsno: [666] depts_name: [Department666]
  :        ver: [2] sub_ver: [null] deptsno: [667] depts_name: [Department667]
  :        ver: [3] sub_ver: [null] deptsno: [668] depts_name: [Department668]
@@ -115,14 +118,21 @@ SpringApplication will load properties from `application.properties` files in th
 
 Use `spring.config.location` environment property to provide alternative location for the property files (comma-separated list of directory locations, or file paths).
 ```bash
-$ java -jar myproject.jar --spring.config.location=classpath:/default.properties,classpath:/override.properties
+java -jar target/sql-rewriter-springboot-example-0.0.1-SNAPSHOT.jar --spring.config.location=classpath:/default.properties,classpath:/override.properties
 ```
 Use `spring.config.name` environment property to switch from `application.properties` to another name.
 
 
 #### [Spring Profile-specific properties](https://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-external-config.html#boot-features-external-config-profile-specific-properties)
-In addition to `application.properties` files, profile-specific properties can also be defined using the naming convention `application-{profile}.properties`.
-he `Environment` has a set of default profiles (by default `[default]`) which are used if no active profiles are set (i.e. if no profiles are explicitly activated then properties from `application-default.properties` are loaded).
+Profile-specific properties can also be defined using the naming convention `application-{profile}.properties`. 
+The `[default]` is used if no active profiles are set (i.e. if no profiles are explicitly activated then properties 
+from `application-default.properties` are loaded).
+
+Use `spring.profiles.active` environment property to set the active property. For example:
+```bash
+java -jar target/sql-rewriter-springboot-example-0.0.1-SNAPSHOT.jar --spring.profiles.active=PROD
+```
+will load the`application-PROD.properties` configuration.
  
 ## Maven repository
 To resolve `journalled-sql-rewriter` you need to add the following maven repository to your `pom.xml`  

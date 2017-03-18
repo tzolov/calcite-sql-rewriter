@@ -105,7 +105,7 @@ public class Application implements CommandLineRunner {
 	}
 
 	private void queryAllDepts() {
-		log.info("     QUERY all depts");
+		log.info("     All depts:");
 		long count = calciteJdbcTemplate.query(
 				"SELECT * FROM hr.depts",
 				(rs, rowNum) -> new Department(rs.getLong("deptno"), rs.getString("department_name"))
@@ -118,7 +118,7 @@ public class Application implements CommandLineRunner {
 	}
 
 	private void queryAllDeptsJournal() {
-		log.info("     QUERY all depts_journal");
+		log.info("     All depts_journal:");
 		long count = postgresJdbcTemplate.query(
 				"SELECT * FROM hr.depts_journal",
 				(rs, rowNum) -> "ver: [" + rs.getString("version_number") + "] "
