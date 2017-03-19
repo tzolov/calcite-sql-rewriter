@@ -36,6 +36,14 @@ public class JournalledDeleteRule extends AbstractForcedRule {
 			throw new IllegalStateException("Unknown Calcite DELETE structure");
 		}
 		relBuilder.push(input.getInput(0));
+
+		JournalVersionType versionType = journalTable.getVersionType();
+		if (!versionType.isValidSqlType(relBuilder.field(versionField).getType().getSqlTypeName())) {
+			throw new IllegalStateException("Incorrect journalVersionType! Column 'version_number' is of type: "
+					+ relBuilder.field(versionField).getType().getSqlTypeName()
+					+ " but the journalVersionType is " + versionType);
+		}
+
 		RexNode newVersion = journalTable.getVersionType().incrementVersion(relBuilder, relBuilder.field(versionField));
 
 		List<String> columnNames = new ArrayList<>();

@@ -56,10 +56,9 @@ public class JournalledUpdateRule extends AbstractForcedRule {
 
 		JournalVersionType versionType = journalTable.getVersionType();
 		if (!versionType.isValidSqlType(relBuilder.field(versionField).getType().getSqlTypeName())) {
-			throw new IllegalStateException("Incorrect version_number type! Model's journalVersionType it: ["
-					+ versionType.name() + "], But actual column type is: ["
-					+ relBuilder.field(versionField).getType().getSqlTypeName() + "]. Verify if your journalVersionType " +
-					"is correctly set!");
+			throw new IllegalStateException("Incorrect journalVersionType! Column 'version_number' is of type: "
+					+ relBuilder.field(versionField).getType().getSqlTypeName()
+					+ " but the journalVersionType is " + versionType);
 		}
 		if (versionType.updateRequiresExplicitVersion()) {
 			RexNode newVersion = versionType.incrementVersion(relBuilder, relBuilder.field(versionField));
