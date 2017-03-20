@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
 		<groupId>io.pivotal.calcite</groupId>
 		<artifactId>sql-rewriter</artifactId>
-		<version>1.6-SNAPSHOT</version>
+		<version>1.6</version>
 	</parent>
 
 	<artifactId>journalled-sql-rewriter-example</artifactId>
@@ -39,8 +38,7 @@
 								</filter>
 							</filters>
 							<transformers>
-								<transformer
-										implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+								<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
 									<mainClass>io.pivotal.calcite.sqlrewriter.Main</mainClass>
 								</transformer>
 							</transformers>
@@ -55,7 +53,7 @@
 		<dependency>
 			<groupId>io.pivotal.calcite</groupId>
 			<artifactId>journalled-sql-rewriter</artifactId>
-			<version>1.6-SNAPSHOT</version>
+			<version>1.6</version>
 		</dependency>
 
 		<dependency>
