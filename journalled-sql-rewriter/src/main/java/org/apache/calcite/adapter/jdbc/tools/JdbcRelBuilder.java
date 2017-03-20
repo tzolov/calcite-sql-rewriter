@@ -40,6 +40,13 @@ public class JdbcRelBuilder extends RelBuilder {
 	) {
 		final Set<SqlKind> flags = EnumSet.noneOf(SqlKind.class);
 
+		// TODO
+		// This is a temporal fix to make HAWQ work with OVER + UNLIMITED BOUNDS
+		// HAWQ requires ORDER BY if andy BOUNDS are set even unlimited upper and lower BOUNDS (which is equal to
+		// the entire partition - e.g. not setting BOUNDs at all --
+		// Note that the unnecessary ORDER BY have negative performance impact and has to be remove once either HAWQ
+		// start supporting unbounded bounds without order by or Calcite can generate shorthand OVER PARTITION BY
+		// syntax.
 		List<RexFieldCollation> orderKeys = expressions.stream().map(
 				rexNode -> new RexFieldCollation(rexNode, flags)).collect(Collectors.toList());
 
