@@ -110,11 +110,11 @@ public class InsertIntegrationTest extends ParameterizedIntegrationBase {
 						"  JdbcTableModify(table=[[" + virtualSchemaName + ", emps_journal]], operation=[INSERT], flattened=[false])\n" +
 						"    JdbcProject(empid=[+($0, 1000)], deptno=[$0], last_name=['added'])\n" +
 						"      JdbcFilter(condition=[AND(=($1, $3), IS NULL($2))])\n" +
-						"        JdbcProject(deptno=[$0], version_number=[$2], subsequent_version_number=[$3], $f4=[MAX($2) OVER (PARTITION BY $0 ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)])\n" +
+						"        JdbcProject(deptno=[$0], version_number=[$2], subsequent_version_number=[$3], $f4=[MAX($2) OVER (PARTITION BY $0 ORDER BY $2 ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)])\n" +
 						"          JdbcTableScan(table=[[" + virtualSchemaName + ", depts_journal]])\n")
 				.planUpdateHasSql("INSERT INTO \"" + actualSchemaName + "\".\"emps_journal\" (\"empid\", \"deptno\", \"last_name\")\n" +
 						"(SELECT \"deptno\" + 1000 AS \"empid\", \"deptno\", 'added' AS \"last_name\"\n" +
-						"FROM (SELECT \"deptno\", \"version_number\", \"subsequent_version_number\", MAX(\"version_number\") OVER (PARTITION BY \"deptno\" ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS \"$f4\"\n" +
+						"FROM (SELECT \"deptno\", \"version_number\", \"subsequent_version_number\", MAX(\"version_number\") OVER (PARTITION BY \"deptno\" ORDER BY \"version_number\" ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS \"$f4\"\n" +
 						"FROM \"" + actualSchemaName + "\".\"depts_journal\") AS \"t\"\n" +
 						"WHERE \"version_number\" = \"$f4\" AND \"subsequent_version_number\" IS NULL)", 4);
 	}

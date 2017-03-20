@@ -1,7 +1,11 @@
 package org.apache.calcite.adapter.jdbc.tools;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.calcite.adapter.jdbc.JdbcTableUtils;
 import org.apache.calcite.plan.Context;
@@ -16,6 +20,7 @@ import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexWindowBound;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.sql.SqlAggFunction;
+import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlWindow;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.tools.RelBuilder;
@@ -33,11 +38,16 @@ public class JdbcRelBuilder extends RelBuilder {
 			List<RexNode> expressions,
 			List<RexNode> partitionKeys
 	) {
+		final Set<SqlKind> flags = EnumSet.noneOf(SqlKind.class);
+
+		List<RexFieldCollation> orderKeys = expressions.stream().map(
+				rexNode -> new RexFieldCollation(rexNode, flags)).collect(Collectors.toList());
+
 		return makeOver(
 				operator,
 				expressions,
 				partitionKeys,
-				ImmutableList.of(),
+				ImmutableList.copyOf(orderKeys),
 				RexWindowBound.create(SqlWindow.createUnboundedPreceding(SqlParserPos.ZERO), null),
 				RexWindowBound.create(SqlWindow.createUnboundedFollowing(SqlParserPos.ZERO), null),
 				true,
