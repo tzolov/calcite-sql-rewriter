@@ -15,3 +15,5 @@ settings.xml
 
 # OSX
 .DS_Store
+
+dependency-reduced-pom.xml

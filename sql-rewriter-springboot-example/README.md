@@ -151,7 +151,7 @@ Then add then `journalled-sql-rewriter` dependency to your `pom.xml`
 <dependency>
 	<groupId>io.pivotal.calcite</groupId>
 	<artifactId>journalled-sql-rewriter</artifactId>
-	<version>1.4</version>
+	<version>1.6</version>
 </dependency>
 
 ```
