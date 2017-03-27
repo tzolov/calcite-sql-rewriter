@@ -15,9 +15,14 @@
  */
 package org.apache.calcite.adapter.jdbc.programs;
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilderFactory;
 import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilderFactoryFactory;
 import org.apache.calcite.plan.Context;
+import org.apache.calcite.plan.RelOptLattice;
+import org.apache.calcite.plan.RelOptMaterialization;
 import org.apache.calcite.plan.RelOptPlanner;
 import org.apache.calcite.plan.RelTraitSet;
 import org.apache.calcite.rel.RelNode;
@@ -38,6 +43,8 @@ public class ForcedRulesProgramTest {
 	private ForcedRule rule;
 	private Program program;
 	private RelNode inNode;
+	private List<RelOptMaterialization> relOptMaterializationList;
+	private List<RelOptLattice> relOptLatticeList;
 
 	@Before
 	public void setupMocks() {
@@ -49,6 +56,8 @@ public class ForcedRulesProgramTest {
 		rule = Mockito.mock(ForcedRule.class);
 		program = new ForcedRulesProgram(superFactory, rule);
 		inNode = Mockito.mock(RelNode.class);
+		relOptMaterializationList = Arrays.asList();
+		relOptLatticeList = Arrays.asList();
 
 		Mockito.doReturn(context).when(planner).getContext();
 		Mockito.doReturn(miniFactory).when(superFactory).create(Mockito.same(context));
@@ -59,7 +68,7 @@ public class ForcedRulesProgramTest {
 		program = new ForcedRulesProgram(superFactory);
 		Mockito.doReturn(ImmutableList.of()).when(inNode).getInputs();
 
-		RelNode result = program.run(planner, inNode, relTraitSet);
+		RelNode result = program.run(planner, inNode, relTraitSet, relOptMaterializationList, relOptLatticeList);
 
 		Assert.assertSame(inNode, result);
 		Mockito.verify(inNode, Mockito.never()).replaceInput(Mockito.anyInt(), Mockito.any());
@@ -67,7 +76,7 @@ public class ForcedRulesProgramTest {
 
 	@Test
 	public void testRun_sendsRelBuilderFactory() {
-		program.run(planner, inNode, relTraitSet);
+		program.run(planner, inNode, relTraitSet, relOptMaterializationList, relOptLatticeList);
 
 		Mockito.verify(rule).apply(Mockito.any(), Mockito.same(miniFactory));
 	}
@@ -83,7 +92,7 @@ public class ForcedRulesProgramTest {
 		Mockito.doReturn(ImmutableList.of()).when(node2b).getInputs();
 		Mockito.doReturn(ImmutableList.of()).when(node3aa).getInputs();
 
-		RelNode result = program.run(planner, inNode, relTraitSet);
+		RelNode result = program.run(planner, inNode, relTraitSet, relOptMaterializationList, relOptLatticeList);
 
 		Assert.assertSame(inNode, result);
 		Mockito.verify(rule).apply(Mockito.same(inNode), Mockito.any());
@@ -97,7 +106,7 @@ public class ForcedRulesProgramTest {
 		RelNode outNode = Mockito.mock(RelNode.class);
 		Mockito.doReturn(outNode).when(rule).apply(Mockito.same(inNode), Mockito.any());
 
-		RelNode result = program.run(planner, inNode, relTraitSet);
+		RelNode result = program.run(planner, inNode, relTraitSet, relOptMaterializationList, relOptLatticeList);
 
 		Assert.assertSame(outNode, result);
 	}
@@ -107,7 +116,7 @@ public class ForcedRulesProgramTest {
 		RelNode outNode = Mockito.mock(RelNode.class);
 		Mockito.doReturn(outNode).when(rule).apply(Mockito.same(inNode), Mockito.any());
 
-		program.run(planner, inNode, relTraitSet);
+		program.run(planner, inNode, relTraitSet, relOptMaterializationList, relOptLatticeList);
 
 		Mockito.verify(outNode).getInputs();
 	}
@@ -121,7 +130,7 @@ public class ForcedRulesProgramTest {
 		Mockito.doReturn(ImmutableList.of(node2a, node2b)).when(inNode).getInputs();
 		Mockito.doReturn(outNode).when(rule).apply(Mockito.same(node2b), Mockito.any());
 
-		RelNode result = program.run(planner, inNode, relTraitSet);
+		RelNode result = program.run(planner, inNode, relTraitSet, relOptMaterializationList, relOptLatticeList);
 
 		Assert.assertSame(inNode, result);
 		Mockito.verify(inNode).replaceInput(Mockito.eq(1), Mockito.same(outNode));
@@ -135,7 +144,7 @@ public class ForcedRulesProgramTest {
 
 		program = new ForcedRulesProgram(superFactory, rule, rule2);
 
-		program.run(planner, inNode, relTraitSet);
+		program.run(planner, inNode, relTraitSet, relOptMaterializationList, relOptLatticeList);
 
 		Mockito.verify(rule).apply(Mockito.same(inNode), Mockito.any());
 		Mockito.verify(rule2, Mockito.never()).apply(Mockito.any(), Mockito.any());

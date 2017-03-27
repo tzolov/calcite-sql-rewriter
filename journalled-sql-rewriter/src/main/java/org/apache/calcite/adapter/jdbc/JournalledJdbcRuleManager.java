@@ -36,7 +36,7 @@ public class JournalledJdbcRuleManager {
 
 	// Use with Hook.PROGRAM.add
 	@SuppressWarnings("Guava") // Must conform to Calcite's API
-	public static Function<Pair<?,Holder<Program>>, Void> program() {
+	public static Function<Holder<Program>, Void> program() {
 		return SequenceProgram.prepend(PROGRAM);
 	}
 

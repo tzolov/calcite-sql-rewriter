@@ -15,6 +15,10 @@
  */
 package org.apache.calcite.adapter.jdbc.programs;
 
+import java.util.List;
+
+import org.apache.calcite.plan.RelOptLattice;
+import org.apache.calcite.plan.RelOptMaterialization;
 import org.apache.calcite.plan.RelOptPlanner;
 import org.apache.calcite.plan.RelOptUtil;
 import org.apache.calcite.plan.RelTraitSet;
@@ -22,7 +26,6 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.tools.Program;
 import org.apache.calcite.tools.Programs;
 import org.apache.calcite.util.Holder;
-import org.apache.calcite.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,12 +44,11 @@ public class SequenceProgram implements Program {
 
 	// Use with Hook.PROGRAM.add
 	@SuppressWarnings("Guava") // Must conform to Calcite's API
-	public static Function<Pair<?,Holder<Program>>, Void> prepend(Program program) {
-		return (pair) -> {
-			if (pair == null) {
+	public static Function<Holder<Program>, Void> prepend(Program program) {
+		return (holder) -> {
+			if (holder == null) {
 				throw new IllegalStateException("No program holder");
 			}
-			Holder<Program> holder = pair.getValue();
 			Program chain = holder.get();
 			if (chain == null) {
 				chain = Programs.standard();
@@ -61,11 +63,16 @@ public class SequenceProgram implements Program {
 	}
 
 	@Override
-	public RelNode run(RelOptPlanner planner, RelNode rel, RelTraitSet requiredOutputTraits) {
+	public RelNode run(RelOptPlanner relOptPlanner,
+			RelNode relNode,
+			RelTraitSet relTraitSet,
+			List<RelOptMaterialization> relOptMaterializationList,
+			List<RelOptLattice> relOptLatticeList) {
 		for (Program program : programs) {
-			rel = program.run(planner, rel, requiredOutputTraits);
-			logger.debug("After running " + program + ":\n" + RelOptUtil.toString(rel));
+			relNode = program.run(relOptPlanner, relNode, relTraitSet, relOptMaterializationList, relOptLatticeList);
+			logger.debug("After running " + program + ":\n" + RelOptUtil.toString(relNode));
 		}
-		return rel;
+		return relNode;
 	}
+
 }

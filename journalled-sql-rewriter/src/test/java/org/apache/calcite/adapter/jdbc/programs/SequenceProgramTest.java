@@ -15,6 +15,11 @@
  */
 package org.apache.calcite.adapter.jdbc.programs;
 
+import java.util.Arrays;
+import java.util.List;
+
+import org.apache.calcite.plan.RelOptLattice;
+import org.apache.calcite.plan.RelOptMaterialization;
 import org.apache.calcite.plan.RelOptPlanner;
 import org.apache.calcite.plan.RelTraitSet;
 import org.apache.calcite.rel.RelNode;
@@ -30,10 +35,18 @@ import com.google.common.collect.ImmutableList;
 
 public class SequenceProgramTest {
 	private RelOptPlanner planner;
+
 	private RelTraitSet relTraitSet;
+
 	private Program program;
+
 	private Program subProgram;
+
 	private RelNode inNode;
+
+	private List<RelOptMaterialization> relOptMaterializationList;
+
+	private List<RelOptLattice> relOptLatticeList;
 
 	@Before
 	public void setupMocks() {
@@ -42,13 +55,15 @@ public class SequenceProgramTest {
 		subProgram = Mockito.mock(Program.class);
 		program = new SequenceProgram(subProgram);
 		inNode = Mockito.mock(RelNode.class);
+		relOptMaterializationList = Arrays.asList();
+		relOptLatticeList = Arrays.asList();
 	}
 
 	@Test
 	public void testEmptyProgram_doesNothing() {
 		program = new SequenceProgram();
 
-		RelNode result = program.run(planner, inNode, relTraitSet);
+		RelNode result = program.run(planner, inNode, relTraitSet, relOptMaterializationList, relOptLatticeList);
 
 		Assert.assertSame(inNode, result);
 	}
@@ -56,9 +71,10 @@ public class SequenceProgramTest {
 	@Test
 	public void testRun_propagatesToSubProgram() {
 		RelNode node2 = Mockito.mock(RelNode.class);
-		Mockito.doReturn(node2).when(subProgram).run(Mockito.any(), Mockito.same(inNode), Mockito.any());
+		Mockito.doReturn(node2).when(subProgram).run(Mockito.any(), Mockito.same(inNode),
+				Mockito.any(), Mockito.anyList(), Mockito.anyList());
 
-		RelNode result = program.run(planner, inNode, relTraitSet);
+		RelNode result = program.run(planner, inNode, relTraitSet, relOptMaterializationList, relOptLatticeList);
 
 		Assert.assertSame(node2, result);
 	}
@@ -66,14 +82,17 @@ public class SequenceProgramTest {
 	@Test
 	public void testRun_propagatesAllParameters() {
 		RelNode node2 = Mockito.mock(RelNode.class);
-		Mockito.doReturn(node2).when(subProgram).run(Mockito.any(), Mockito.same(inNode), Mockito.any());
+		Mockito.doReturn(node2).when(subProgram).run(Mockito.any(), Mockito.same(inNode),
+				Mockito.any(), Mockito.anyList(), Mockito.anyList());
 
-		program.run(planner, inNode, relTraitSet);
+		program.run(planner, inNode, relTraitSet, relOptMaterializationList, relOptLatticeList);
 
 		Mockito.verify(subProgram).run(
 				Mockito.same(planner),
 				Mockito.any(),
-				Mockito.same(relTraitSet)
+				Mockito.same(relTraitSet),
+				Mockito.anyList(),
+				Mockito.anyList()
 		);
 	}
 
@@ -83,10 +102,12 @@ public class SequenceProgramTest {
 		RelNode node2 = Mockito.mock(RelNode.class);
 		RelNode node3 = Mockito.mock(RelNode.class);
 		program = new SequenceProgram(subProgram, subProgram2);
-		Mockito.doReturn(node2).when(subProgram).run(Mockito.any(), Mockito.same(inNode), Mockito.any());
-		Mockito.doReturn(node3).when(subProgram2).run(Mockito.any(), Mockito.same(node2), Mockito.any());
+		Mockito.doReturn(node2).when(subProgram).run(Mockito.any(), Mockito.same(inNode),
+				Mockito.any(), Mockito.anyList(), Mockito.anyList());
+		Mockito.doReturn(node3).when(subProgram2).run(Mockito.any(), Mockito.same(node2),
+				Mockito.any(), Mockito.anyList(), Mockito.anyList());
 
-		RelNode result = program.run(planner, inNode, relTraitSet);
+		RelNode result = program.run(planner, inNode, relTraitSet, relOptMaterializationList, relOptLatticeList);
 
 		Assert.assertSame(node3, result);
 	}
@@ -96,7 +117,7 @@ public class SequenceProgramTest {
 		Program originalProgram = Mockito.mock(Program.class);
 		Holder<Program> holder = Holder.of(originalProgram);
 
-		SequenceProgram.prepend(subProgram).apply(Pair.of(null, holder));
+		SequenceProgram.prepend(subProgram).apply(holder);
 
 		Program newProgram = holder.get();
 		Assert.assertTrue(newProgram instanceof SequenceProgram);
@@ -110,7 +131,7 @@ public class SequenceProgramTest {
 	public void testPrepend_usesTheDefaultProgramIfGivenNull() {
 		Holder<Program> holder = Holder.of(null);
 
-		SequenceProgram.prepend(subProgram).apply(Pair.of(null, holder));
+		SequenceProgram.prepend(subProgram).apply(holder);
 
 		Program newProgram = holder.get();
 		Assert.assertTrue(newProgram instanceof SequenceProgram);

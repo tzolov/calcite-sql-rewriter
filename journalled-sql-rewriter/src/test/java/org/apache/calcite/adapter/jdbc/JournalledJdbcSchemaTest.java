@@ -15,22 +15,6 @@
  */
 package org.apache.calcite.adapter.jdbc;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import org.apache.calcite.adapter.jdbc.programs.ForcedRulesProgram;
-import org.apache.calcite.adapter.jdbc.programs.SequenceProgram;
-import org.apache.calcite.runtime.Hook;
-import org.apache.calcite.schema.Schema;
-import org.apache.calcite.schema.Table;
-import org.apache.calcite.tools.Program;
-import org.apache.calcite.util.Holder;
-import org.apache.calcite.util.Pair;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.mockito.Mockito;
-
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
@@ -38,6 +22,22 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+
+import org.apache.calcite.adapter.jdbc.programs.ForcedRulesProgram;
+import org.apache.calcite.adapter.jdbc.programs.SequenceProgram;
+import org.apache.calcite.runtime.Hook;
+import org.apache.calcite.schema.Schema;
+import org.apache.calcite.schema.Table;
+import org.apache.calcite.tools.Program;
+import org.apache.calcite.util.Holder;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.mockito.Mockito;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 
 public class JournalledJdbcSchemaTest {
 	private static final String DBURL = "jdbc:hsqldb:mem:basic";
@@ -89,7 +89,7 @@ public class JournalledJdbcSchemaTest {
 		try {
 			Program def = Mockito.mock(Program.class);
 			Holder<Program> holder = Holder.of(def);
-			Hook.PROGRAM.run(Pair.of(null, holder));
+			Hook.PROGRAM.run(holder);
 			Assert.assertTrue(holder.get() instanceof SequenceProgram);
 			Assert.assertTrue(((SequenceProgram) holder.get()).getPrograms().get(0) instanceof ForcedRulesProgram);
 		} finally {

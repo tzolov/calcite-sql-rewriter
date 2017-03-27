@@ -19,6 +19,8 @@ import java.util.List;
 
 import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilderFactory;
 import org.apache.calcite.adapter.jdbc.tools.JdbcRelBuilderFactoryFactory;
+import org.apache.calcite.plan.RelOptLattice;
+import org.apache.calcite.plan.RelOptMaterialization;
 import org.apache.calcite.plan.RelOptPlanner;
 import org.apache.calcite.plan.RelOptUtil;
 import org.apache.calcite.plan.RelTraitSet;
@@ -32,6 +34,7 @@ public class ForcedRulesProgram implements Program {
 	private static final Logger logger = LoggerFactory.getLogger(ForcedRulesProgram.class);
 
 	private final JdbcRelBuilderFactoryFactory relBuilderFactoryFactory;
+
 	private final ForcedRule[] rules;
 
 	public ForcedRulesProgram(JdbcRelBuilderFactoryFactory relBuilderFactoryFactory, ForcedRule... rules) {
@@ -40,13 +43,15 @@ public class ForcedRulesProgram implements Program {
 	}
 
 	@Override
-	public RelNode run(
-			RelOptPlanner planner,
-			RelNode rel,
-			RelTraitSet requiredOutputTraits
-	) {
-		logger.debug("Running forced rules on:\n" + RelOptUtil.toString(rel));
-		return replace(rel, rules, relBuilderFactoryFactory.create(planner.getContext()));
+	public RelNode run(RelOptPlanner relOptPlanner,
+			RelNode relNode,
+			RelTraitSet relTraitSet,
+			List<RelOptMaterialization> relOptMaterializationList,
+			List<RelOptLattice> list1) {
+
+		logger.debug("Running forced rules on:\n" + RelOptUtil.toString(relNode));
+
+		return replace(relNode, rules, relBuilderFactoryFactory.create(relOptPlanner.getContext()));
 	}
 
 	private RelNode replace(RelNode original, ForcedRule[] rules, JdbcRelBuilderFactory relBuilderFactory) {
